@@ -28,7 +28,7 @@ export const Footer: React.FC = () => {
             </p>
             <div className="pt-1">
               <span className="font-mono text-[10px] text-hub-gold bg-hub-gold/10 px-2 py-0.5 rounded border border-hub-gold/20">
-                Version 1.0 · Editorial Release
+                Version 3.2 · Editorial & Interactive Craft
               </span>
             </div>
           </div>
@@ -72,10 +72,10 @@ export const Footer: React.FC = () => {
           {/* Principles Col */}
           <div className="space-y-2">
             <span className="font-mono text-slate-300 text-xs font-semibold block uppercase tracking-wider">
-              第一版工程边界
+              V3.2 工程与架构规范
             </span>
             <p className="text-slate-400 leading-relaxed text-[11px]">
-              首版严守“入口统一与路径串联”，不伪造全站统一行情，不生成脱离数据的虚假指标；各子系统独立演进，保持边界清晰。
+              严守“入口统一与路径串联”，支持双主题刊物排版、右侧规范抽屉、数据契约转接与知识飞轮沉淀；各子系统独立演进，保持边界清晰。
             </p>
           </div>
 
@@ -93,7 +93,7 @@ export const Footer: React.FC = () => {
             <span>·</span>
             <span className="flex items-center gap-1">
               <Database className="w-3.5 h-3.5 text-hub-gold" />
-              <span>单事实目录驱动 (Registry v1.0)</span>
+              <span>单事实目录驱动 (Registry v3.2)</span>
             </span>
           </div>
 
