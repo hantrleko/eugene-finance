@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, X, ExternalLink, ArrowRight, BookOpen, Layers, CornerDownLeft } from 'lucide-react';
+import { Search, X, ExternalLink, ArrowRight, BookOpen, Layers, CornerDownLeft, Star, Zap } from 'lucide-react';
 import { PROJECTS } from '../data/projects';
 import { PLAYBOOKS } from '../data/playbooks';
 import { Project, Playbook } from '../types';
+import { prewarmUrl } from '../utils/prewarm';
 
 interface CommandPaletteProps {
   isOpen: boolean;
@@ -10,6 +11,8 @@ interface CommandPaletteProps {
   onSelectProject: (project: Project) => void;
   onSelectPlaybook: (playbook: Playbook) => void;
   onOpenProjectExternal: (project: Project) => void;
+  isPinned?: (id: string) => boolean;
+  onTogglePin?: (id: string) => void;
 }
 
 export const CommandPalette: React.FC<CommandPaletteProps> = ({
@@ -18,6 +21,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   onSelectProject,
   onSelectPlaybook,
   onOpenProjectExternal,
+  isPinned,
+  onTogglePin,
 }) => {
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -80,6 +85,16 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
   const totalResults = allResults.length;
 
+  // Prewarm selected item if it's a container project
+  useEffect(() => {
+    if (allResults.length > 0 && selectedIndex < allResults.length) {
+      const selected = allResults[selectedIndex];
+      if (selected.type === 'project' && selected.item.officialUrl) {
+        prewarmUrl(selected.item.officialUrl);
+      }
+    }
+  }, [selectedIndex, allResults]);
+
   // Handle Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -102,9 +117,29 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             onSelectPlaybook(selected.item);
             onClose();
           } else {
-            // For project: if web app exists, open or view specification
-            onSelectProject(selected.item);
-            onClose();
+            // If Shift is pressed, always open detail modal
+            if (e.shiftKey) {
+              onSelectProject(selected.item);
+              onClose();
+            } else {
+              // Direct enter: if officialUrl exists, open external app; else open details
+              if (selected.item.stage === 'existing' && selected.item.officialUrl) {
+                onOpenProjectExternal(selected.item);
+                onClose();
+              } else {
+                onSelectProject(selected.item);
+                onClose();
+              }
+            }
+          }
+        }
+      } else if ((e.key === 'p' || e.key === 'P') && !e.ctrlKey && !e.metaKey && !query) {
+        // Toggle pin if search input is empty or when focused on item
+        if (allResults.length > 0 && selectedIndex < allResults.length) {
+          const selected = allResults[selectedIndex];
+          if (selected.type === 'project' && onTogglePin) {
+            e.preventDefault();
+            onTogglePin(selected.item.id);
           }
         }
       }
@@ -112,7 +147,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, selectedIndex, totalResults, allResults, onClose, onSelectPlaybook, onSelectProject]);
+  }, [isOpen, selectedIndex, totalResults, allResults, onClose, onSelectPlaybook, onSelectProject, onOpenProjectExternal, onTogglePin, query]);
 
   if (!isOpen) return null;
 
@@ -136,7 +171,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               setQuery(e.target.value);
               setSelectedIndex(0);
             }}
-            placeholder="搜索工具、方法或研究任务 (Ctrl+K)..."
+            placeholder="搜索工具、方法或研究任务 (支持拼音/英文/方法名)..."
             className="w-full bg-transparent text-slate-100 placeholder-slate-400 text-sm focus:outline-none"
           />
           {query && (
@@ -230,17 +265,21 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                     const actualIndex = matchedPlaybooks.length + pIdx;
                     const isSelected = selectedIndex === actualIndex;
                     const isExisting = p.stage === 'existing';
+                    const pinned = isPinned ? isPinned(p.id) : false;
 
                     return (
                       <div
                         key={p.id}
+                        onMouseEnter={() => {
+                          if (p.officialUrl) prewarmUrl(p.officialUrl);
+                        }}
                         onClick={() => {
                           onSelectProject(p);
                           onClose();
                         }}
                         className={`group flex items-center justify-between px-3 py-2.5 rounded-lg cursor-pointer transition-all border ${
                           isSelected
-                            ? 'bg-hub-card border-hub-borderHover shadow-sm'
+                            ? 'bg-hub-card border-hub-gold/50 shadow-sm'
                             : 'hover:bg-hub-card/60 border-transparent'
                         }`}
                       >
@@ -261,13 +300,35 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                             >
                               {isExisting ? '已有版本' : '规划中'}
                             </span>
+                            {p.hostingType === 'container' && (
+                              <span className="text-[9px] font-mono text-amber-400/80 bg-amber-950/30 px-1 rounded border border-amber-800/30">
+                                容器
+                              </span>
+                            )}
                           </div>
                           <p className="text-xs text-slate-400 mt-0.5 line-clamp-1">
                             {p.summary}
                           </p>
                         </div>
 
-                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          {onTogglePin && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onTogglePin(p.id);
+                              }}
+                              className={`p-1 rounded transition-colors ${
+                                pinned
+                                  ? 'text-hub-gold hover:text-amber-300'
+                                  : 'text-slate-500 hover:text-slate-300'
+                              }`}
+                              title={pinned ? '取消常用' : '设为常用 (P)'}
+                            >
+                              <Star className={`w-3.5 h-3.5 ${pinned ? 'fill-hub-gold' : ''}`} />
+                            </button>
+                          )}
+
                           {isExisting && p.officialUrl && (
                             <button
                               onClick={(e) => {
@@ -276,16 +337,25 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                                 onClose();
                               }}
                               className="px-2 py-1 text-xs text-hub-teal hover:text-white bg-hub-teal/15 hover:bg-hub-teal/30 rounded border border-hub-teal/30 flex items-center gap-1 transition-colors"
-                              title="打开线上应用"
+                              title="打开线上应用 (Enter)"
                             >
                               <span>打开</span>
                               <ExternalLink className="w-3 h-3" />
                             </button>
                           )}
-                          <span className="text-xs text-slate-400 group-hover:text-hub-gold transition-colors flex items-center gap-0.5 ml-1">
+
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onSelectProject(p);
+                              onClose();
+                            }}
+                            className="text-xs text-slate-400 group-hover:text-hub-gold transition-colors flex items-center gap-0.5 ml-1"
+                            title="查看详情 (Shift+Enter)"
+                          >
                             <span className="hidden sm:inline">详情</span>
                             <ArrowRight className="w-3 h-3" />
-                          </span>
+                          </button>
                         </div>
                       </div>
                     );
@@ -297,8 +367,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         </div>
 
         {/* Footer info & keyboard tips */}
-        <div className="px-4 py-2 border-t border-hub-border bg-hub-card/60 text-[11px] text-slate-400 flex items-center justify-between font-mono">
-          <div className="flex items-center gap-3">
+        <div className="px-4 py-2 border-t border-hub-border bg-hub-card/60 text-[11px] text-slate-400 flex items-center justify-between font-mono flex-wrap gap-2">
+          <div className="flex items-center gap-3 flex-wrap">
             <span className="flex items-center gap-1">
               <kbd className="px-1 py-0.5 bg-hub-bg rounded border border-hub-border text-[10px]">↑</kbd>
               <kbd className="px-1 py-0.5 bg-hub-bg rounded border border-hub-border text-[10px]">↓</kbd>
@@ -308,10 +378,20 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               <kbd className="px-1 py-0.5 bg-hub-bg rounded border border-hub-border text-[10px] flex items-center">
                 <CornerDownLeft className="w-2.5 h-2.5" />
               </kbd>
-              <span>确认</span>
+              <span>打开应用</span>
             </span>
+            <span className="flex items-center gap-1 hidden sm:flex">
+              <kbd className="px-1 py-0.5 bg-hub-bg rounded border border-hub-border text-[10px]">Shift+↵</kbd>
+              <span>规格</span>
+            </span>
+            {onTogglePin && (
+              <span className="flex items-center gap-1 hidden md:flex">
+                <kbd className="px-1 py-0.5 bg-hub-bg rounded border border-hub-border text-[10px]">P</kbd>
+                <span>设为常用</span>
+              </span>
+            )}
           </div>
-          <span>点击遮罩或右上角退出</span>
+          <span className="text-[10px]">ESC 退出</span>
         </div>
       </div>
     </div>

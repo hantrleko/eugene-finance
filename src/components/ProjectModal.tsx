@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { X, ExternalLink, Github, Copy, Check, Star, BookOpen, ArrowLeft, Terminal, Globe, Lock } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, ExternalLink, Github, Copy, Check, Star, BookOpen, ArrowLeft, Terminal, Globe, Lock, Zap } from 'lucide-react';
 import { Project, Playbook } from '../types';
 import { PLAYBOOKS } from '../data/playbooks';
+import { prewarmUrl } from '../utils/prewarm';
 
 interface ProjectModalProps {
   project: Project | null;
@@ -27,6 +28,25 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
   onOpenPlaybook,
 }) => {
   const [copiedCommand, setCopiedCommand] = useState(false);
+
+  // Esc key & container prewarm
+  useEffect(() => {
+    if (!isOpen || !project) return;
+
+    if (project.officialUrl) {
+      prewarmUrl(project.officialUrl);
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, project, onClose]);
 
   if (!isOpen || !project) return null;
 
@@ -153,10 +173,24 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
                 </span>
               </div>
               <div className="p-3 rounded-lg bg-hub-card border border-hub-border">
-                <span className="text-[10px] text-slate-400 block font-mono mb-1">访问渠道</span>
-                <span className="text-xs font-semibold text-slate-200">
-                  {project.officialUrl ? '线上在线应用' : '本地运行环境'}
-                </span>
+                <span className="text-[10px] text-slate-400 block font-mono mb-1">访问渠道与架构</span>
+                <div className="text-xs font-semibold">
+                  {project.officialUrl ? (
+                    project.hostingType === 'container' ? (
+                      <span className="text-amber-300 flex items-center gap-1.5" title="Railway/Replit 托管，首次访问容器冷启动约10秒，打开详情页时已发起静默预热">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+                        <span>云端容器 (已发起预热)</span>
+                      </span>
+                    ) : (
+                      <span className="text-cyan-300 flex items-center gap-1.5">
+                        <Zap className="w-3 h-3 text-cyan-300" />
+                        <span>静态部署 · 秒级直达</span>
+                      </span>
+                    )
+                  ) : (
+                    <span className="text-slate-300">本地运行环境</span>
+                  )}
+                </div>
               </div>
               <div className="p-3 rounded-lg bg-hub-card border border-hub-border">
                 <span className="text-[10px] text-slate-400 block font-mono mb-1">核验状态</span>

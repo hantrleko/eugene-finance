@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { WorkbenchSection } from './components/WorkbenchSection';
@@ -12,7 +12,39 @@ import { PlaybookModal } from './components/PlaybookModal';
 import { useWorkbench } from './hooks/useWorkbench';
 import { Project, Playbook, DomainId, TargetGoal, ActiveTab } from './types';
 import { PROJECTS } from './data/projects';
+import { PLAYBOOKS } from './data/playbooks';
 import { ArrowRight, Layers } from 'lucide-react';
+
+// Hash parsing for deep linking (e.g. #workbench, #catalog?domain=02-company, #project=quant-risk-lab, #playbook=playbook-a)
+function parseHash(hashStr: string) {
+  const clean = hashStr.replace(/^#\/?/, '');
+  if (!clean) return { tab: 'workbench' as ActiveTab };
+
+  const [routePart, queryPart] = clean.split('?');
+  const params = new URLSearchParams(queryPart || '');
+
+  if (routePart.startsWith('project=') || routePart.startsWith('project/')) {
+    const projectId = routePart.split(/[/=]/)[1];
+    return { tab: 'catalog' as ActiveTab, projectId };
+  }
+
+  if (routePart.startsWith('playbook=') || routePart.startsWith('playbook/')) {
+    const playbookId = routePart.split(/[/=]/)[1];
+    return { tab: 'workbench' as ActiveTab, playbookId };
+  }
+
+  let tab: ActiveTab = 'workbench';
+  if (routePart === 'catalog' || routePart === 'tools') tab = 'catalog';
+  else if (routePart === 'exploration') tab = 'exploration';
+
+  return {
+    tab,
+    domain: params.get('domain') as DomainId | null,
+    goal: params.get('goal') as TargetGoal | null,
+    projectId: params.get('project'),
+    playbookId: params.get('playbook'),
+  };
+}
 
 export function App() {
   const {
@@ -20,17 +52,17 @@ export function App() {
     recentProjects,
     isPinned,
     togglePin,
+    movePinned,
+    exportConfig,
+    importConfig,
     recordOpen,
     clearRecent,
     resetPinnedToDefault,
   } = useWorkbench();
 
-  // Active view tab: 'workbench' | 'catalog' | 'exploration' (defaults to 'workbench')
+  // Active view tab: 'workbench' | 'catalog' | 'exploration'
   const [activeTab, setActiveTab] = useState<ActiveTab>(() => {
-    const hash = window.location.hash.replace('#', '');
-    if (hash === 'catalog' || hash === 'tools') return 'catalog';
-    if (hash === 'exploration') return 'exploration';
-    return 'workbench';
+    return parseHash(window.location.hash).tab;
   });
 
   // Modals & Panels state
@@ -43,27 +75,64 @@ export function App() {
   const [selectedDomain, setSelectedDomain] = useState<DomainId | 'all'>('all');
   const [selectedGoal, setSelectedGoal] = useState<TargetGoal | 'all'>('all');
 
-  // Sync tab with URL hash
+  // Sync state from URL hash
+  const syncFromHash = useCallback(() => {
+    const parsed = parseHash(window.location.hash);
+    if (parsed.tab) {
+      setActiveTab(parsed.tab);
+    }
+    if (parsed.domain) {
+      setSelectedDomain(parsed.domain);
+    }
+    if (parsed.goal) {
+      setSelectedGoal(parsed.goal);
+    }
+    if (parsed.projectId) {
+      const p = PROJECTS.find((item) => item.id === parsed.projectId);
+      if (p) setDetailProject(p);
+    }
+    if (parsed.playbookId) {
+      const pb = PLAYBOOKS.find((item) => item.id === parsed.playbookId);
+      if (pb) setActivePlaybook(pb);
+    }
+  }, []);
+
+  // Initial deep link check & hashchange listener
+  useEffect(() => {
+    syncFromHash();
+    window.addEventListener('hashchange', syncFromHash);
+    return () => window.removeEventListener('hashchange', syncFromHash);
+  }, [syncFromHash]);
+
+  // Sync tab switch to URL hash
   const handleTabChange = (tab: ActiveTab) => {
     setActiveTab(tab);
     window.location.hash = tab;
   };
 
-  useEffect(() => {
-    const handleHashChange = () => {
-      const hash = window.location.hash.replace('#', '');
-      if (hash === 'catalog' || hash === 'tools') {
-        setActiveTab('catalog');
-      } else if (hash === 'exploration') {
-        setActiveTab('exploration');
-      } else if (hash === 'workbench') {
-        setActiveTab('workbench');
-      }
-    };
+  // Open modal with deep linking
+  const handleOpenDetailModal = (project: Project) => {
+    setNavigatedFromPlaybook(null);
+    setDetailProject(project);
+    window.history.replaceState(null, '', `#project=${project.id}`);
+  };
 
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
+  const handleCloseDetailModal = () => {
+    setDetailProject(null);
+    setNavigatedFromPlaybook(null);
+    window.history.replaceState(null, '', `#${activeTab}`);
+  };
+
+  const handleOpenPlaybookModal = (playbook: Playbook) => {
+    setNavigatedFromPlaybook(null);
+    setActivePlaybook(playbook);
+    window.history.replaceState(null, '', `#playbook=${playbook.id}`);
+  };
+
+  const handleClosePlaybookModal = () => {
+    setActivePlaybook(null);
+    window.history.replaceState(null, '', `#${activeTab}`);
+  };
 
   // Global Keyboard shortcuts: Ctrl+K / Cmd+K
   useEffect(() => {
@@ -84,7 +153,7 @@ export function App() {
     if (targetUrl) {
       window.open(targetUrl, '_blank', 'noopener,noreferrer');
     } else {
-      setDetailProject(project);
+      handleOpenDetailModal(project);
     }
   };
 
@@ -92,7 +161,7 @@ export function App() {
   const handleSelectGoalFromHero = (goal: TargetGoal) => {
     setSelectedGoal(goal);
     setActiveTab('catalog');
-    window.location.hash = 'catalog';
+    window.location.hash = `catalog?goal=${goal}`;
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -101,6 +170,7 @@ export function App() {
     setActivePlaybook(null);
     setNavigatedFromPlaybook(playbook);
     setDetailProject(project);
+    window.history.replaceState(null, '', `#project=${project.id}`);
   };
 
   // Back from Project specification to Playbook
@@ -110,6 +180,7 @@ export function App() {
       setDetailProject(null);
       setNavigatedFromPlaybook(null);
       setActivePlaybook(pb);
+      window.history.replaceState(null, '', `#playbook=${pb.id}`);
     }
   };
 
@@ -138,28 +209,25 @@ export function App() {
               activeGoal={selectedGoal === 'all' ? null : selectedGoal}
             />
 
-            {/* Workbench Section (常用工具 + 最近打开) */}
+            {/* Workbench Section (常用工具 + 最近打开 + 排序与备份) */}
             <WorkbenchSection
               pinnedProjects={pinnedProjects}
               recentProjects={recentProjects}
               isPinned={isPinned}
               onTogglePin={togglePin}
+              onMovePinned={movePinned}
               onOpenProjectExternal={handleOpenProjectExternal}
-              onSelectProject={(p) => {
-                setNavigatedFromPlaybook(null);
-                setDetailProject(p);
-              }}
+              onSelectProject={handleOpenDetailModal}
               onClearRecent={clearRecent}
               onResetPinned={resetPinnedToDefault}
+              onExportConfig={exportConfig}
+              onImportConfig={importConfig}
               onNavigateToCatalog={() => handleTabChange('catalog')}
             />
 
             {/* Research Playbooks (三条首发研究路径) */}
             <PlaybooksSection
-              onOpenPlaybook={(pb) => {
-                setNavigatedFromPlaybook(null);
-                setActivePlaybook(pb);
-              }}
+              onOpenPlaybook={handleOpenPlaybookModal}
             />
 
             {/* Bottom transition banner into All Tools */}
@@ -198,15 +266,18 @@ export function App() {
           <div className="animate-in fade-in duration-200">
             <CatalogSection
               selectedDomain={selectedDomain}
-              onSelectDomain={setSelectedDomain}
+              onSelectDomain={(d) => {
+                setSelectedDomain(d);
+                window.history.replaceState(null, '', d === 'all' ? '#catalog' : `#catalog?domain=${d}`);
+              }}
               selectedGoal={selectedGoal}
-              onSelectGoal={setSelectedGoal}
+              onSelectGoal={(g) => {
+                setSelectedGoal(g);
+                window.history.replaceState(null, '', g === 'all' ? '#catalog' : `#catalog?goal=${g}`);
+              }}
               isPinned={isPinned}
               onTogglePin={togglePin}
-              onSelectProject={(p) => {
-                setNavigatedFromPlaybook(null);
-                setDetailProject(p);
-              }}
+              onSelectProject={handleOpenDetailModal}
               onOpenProjectExternal={handleOpenProjectExternal}
             />
           </div>
@@ -218,10 +289,7 @@ export function App() {
         {activeTab === 'exploration' && (
           <div className="animate-in fade-in duration-200">
             <ExplorationSection
-              onSelectProject={(p) => {
-                setNavigatedFromPlaybook(null);
-                setDetailProject(p);
-              }}
+              onSelectProject={handleOpenDetailModal}
               onOpenProjectExternal={handleOpenProjectExternal}
             />
           </div>
@@ -236,25 +304,18 @@ export function App() {
       <CommandPalette
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
-        onSelectProject={(p) => {
-          setNavigatedFromPlaybook(null);
-          setDetailProject(p);
-        }}
-        onSelectPlaybook={(pb) => {
-          setNavigatedFromPlaybook(null);
-          setActivePlaybook(pb);
-        }}
+        onSelectProject={handleOpenDetailModal}
+        onSelectPlaybook={handleOpenPlaybookModal}
         onOpenProjectExternal={handleOpenProjectExternal}
+        isPinned={isPinned}
+        onTogglePin={togglePin}
       />
 
       {/* Unified Project Specification Drawer / Modal */}
       <ProjectModal
         project={detailProject}
         isOpen={Boolean(detailProject)}
-        onClose={() => {
-          setDetailProject(null);
-          setNavigatedFromPlaybook(null);
-        }}
+        onClose={handleCloseDetailModal}
         fromPlaybook={navigatedFromPlaybook}
         onBackToPlaybook={handleBackToPlaybook}
         isPinned={detailProject ? isPinned(detailProject.id) : false}
@@ -263,14 +324,14 @@ export function App() {
         onOpenPlaybook={(pb) => {
           setDetailProject(null);
           setNavigatedFromPlaybook(null);
-          setActivePlaybook(pb);
+          handleOpenPlaybookModal(pb);
         }}
       />
 
       {/* Playbook Detailed Modal */}
       <PlaybookModal
         playbook={activePlaybook}
-        onClose={() => setActivePlaybook(null)}
+        onClose={handleClosePlaybookModal}
         onSelectProjectFromPlaybook={handleSelectProjectFromPlaybook}
         onOpenProjectExternal={handleOpenProjectExternal}
       />

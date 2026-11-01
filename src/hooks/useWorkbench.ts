@@ -98,6 +98,52 @@ export function useWorkbench() {
     setPinnedIds(DEFAULT_PINNED_IDS);
   };
 
+  // Reorder pinned projects
+  const movePinned = (projectId: string, direction: 'prev' | 'next') => {
+    setPinnedIds((prev) => {
+      const index = prev.indexOf(projectId);
+      if (index === -1) return prev;
+      const targetIndex = direction === 'prev' ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= prev.length) return prev;
+      const next = [...prev];
+      const temp = next[index];
+      next[index] = next[targetIndex];
+      next[targetIndex] = temp;
+      return next;
+    });
+  };
+
+  // Export workbench configuration as JSON
+  const exportConfig = () => {
+    const config = {
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      pinnedIds,
+      recentIds,
+    };
+    return JSON.stringify(config, null, 2);
+  };
+
+  // Import workbench configuration from JSON
+  const importConfig = (jsonStr: string): boolean => {
+    try {
+      const parsed = JSON.parse(jsonStr);
+      if (parsed && Array.isArray(parsed.pinnedIds)) {
+        const validIds = parsed.pinnedIds.filter((id: string) => 
+          PROJECTS.some((p) => p.id === id)
+        );
+        setPinnedIds(validIds);
+        if (Array.isArray(parsed.recentIds)) {
+          setRecentIds(parsed.recentIds);
+        }
+        return true;
+      }
+    } catch {
+      // parse error
+    }
+    return false;
+  };
+
   // Resolve project objects
   const pinnedProjects: Project[] = pinnedIds
     .map((id) => PROJECTS.find((p) => p.id === id))
@@ -112,6 +158,9 @@ export function useWorkbench() {
     recentProjects,
     isPinned,
     togglePin,
+    movePinned,
+    exportConfig,
+    importConfig,
     recordOpen,
     clearRecent,
     clearAllPinned,

@@ -12,6 +12,8 @@ export type Stage = 'existing' | 'planned';
 
 export type AccessMode = 'web' | 'local' | 'private' | 'planned';
 
+export type HostingType = 'static' | 'container' | 'local' | 'planned';
+
 export interface DomainInfo {
   id: DomainId;
   number: string;
@@ -37,6 +39,7 @@ export interface Project {
   methodTags: string[];
   stage: Stage;
   accessMode: AccessMode;
+  hostingType?: HostingType;
   officialUrl?: string;
   repoUrl?: string;
   isRepoPrivate?: boolean;

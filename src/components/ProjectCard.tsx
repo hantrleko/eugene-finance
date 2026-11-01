@@ -1,6 +1,7 @@
 import React from 'react';
-import { Star, ExternalLink, Info, Terminal, Globe, Lock, Clock } from 'lucide-react';
+import { Star, ExternalLink, Info, Terminal, Globe, Lock, Clock, Zap } from 'lucide-react';
 import { Project } from '../types';
+import { prewarmUrl } from '../utils/prewarm';
 
 interface ProjectCardProps {
   project: Project;
@@ -21,10 +22,21 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
 
   const renderAccessBadge = () => {
     if (project.officialUrl) {
+      if (project.hostingType === 'container') {
+        return (
+          <span 
+            className="flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-950/40 text-amber-300 border border-amber-800/40"
+            title="云端容器 (Railway/Replit)：休眠时首次访问冷启动约10秒，悬停已自动预热"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+            <span>云端容器</span>
+          </span>
+        );
+      }
       return (
-        <span className="flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded bg-cyan-950/40 text-cyan-400 border border-cyan-800/40">
-          <Globe className="w-2.5 h-2.5" />
-          <span>线上应用</span>
+        <span className="flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded bg-cyan-950/40 text-cyan-400 border border-cyan-800/40" title="静态极速 (GitHub Pages / Cloudflare)">
+          <Zap className="w-2.5 h-2.5 text-cyan-300" />
+          <span>静态极速</span>
         </span>
       );
     }
@@ -53,7 +65,10 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   };
 
   return (
-    <div className="group relative flex flex-col justify-between p-5 rounded-xl bg-hub-card/85 hover:bg-hub-cardHover border border-hub-border hover:border-hub-borderHover transition-all duration-150 shadow-sm">
+    <div 
+      onMouseEnter={() => prewarmUrl(project.officialUrl)}
+      className="group relative flex flex-col justify-between p-5 rounded-xl bg-hub-card/85 hover:bg-hub-cardHover border border-hub-border hover:border-hub-borderHover transition-all duration-150 shadow-sm"
+    >
       
       <div>
         {/* Top bar with Domain + SubCategory + Pin Button */}
