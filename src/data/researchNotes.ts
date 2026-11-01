@@ -2,6 +2,39 @@ import { ResearchNote } from '../types';
 
 export const RESEARCH_NOTES: ResearchNote[] = [
   {
+    id: 'note-byd-valuation-2025',
+    isDemo: true,
+    title: '比亚迪：垂直一体化成本壁垒、出海溢价与市场隐含预期逆向DCF推演',
+    subtitle: '遵循路径 A 标准流程，连接巨潮8个季度披露与逆向估值模型',
+    date: '2025-01-20',
+    author: 'Eugene Han',
+    playbookId: 'playbook-a',
+    playbookLetter: 'A',
+    playbookTitle: '研究一家公司',
+    domainId: '02-company',
+    domainName: '公司与产业',
+    associatedProjectIds: [
+      'company-valuation-implied-expectations',
+      'industry-profit-pool-capex'
+    ],
+    targetGoal: 'company',
+    tags: ['逆向DCF', '单车净利', '垂直一体化', '海外出海', '安全边际'],
+    summary: '基于比亚迪连续8个季度财报重构，当前8,300亿元市值仅隐含未来5年销量年化增长14.2%且单车净利维持在8,500元。我方基准情景预计复合增速18.5%，估值具备24.5%安全边际，并确立两项硬性认错条件。',
+    keyFindings: [
+      '单车经济学穿透：单车ASP下调至13.4万元的同时，单车制造成本降至10.4万元，整车毛利率逆势稳定在22.4%历史高位。',
+      '逆向DCF隐含增速：8,300亿市值对应未来5年交付复合增速仅为14.2%（对应2029年总销量约820万台），定价较为保守。',
+      '非共识洞察：市场过度担忧国内内卷打压利润，低估了第五代DM混动对燃油车存量的再次收割及海外高端出口的超额毛利对冲。',
+      '严苛认错条件：单季度整车毛利率跌破18.0%，或核心海外市场准入封锁导致海外月销连续3个月负增长，即判定假说失效。'
+    ],
+    metrics: [
+      { label: '市场隐含增速', value: '14.2%', hint: '逆向DCF反推隐含预期' },
+      { label: '我方基准预测', value: '18.5%', hint: '全球化乘用车渗透模型' },
+      { label: '估值安全边际', value: '24.5%', hint: '相对于内在价值中枢' },
+      { label: '认错止损线', value: '毛利 < 18.0%', hint: '前置硬性反证指标' }
+    ],
+    contentMarkdown: `# 比亚迪：垂直一体化成本壁垒、出海溢价与市场隐含预期逆向DCF推演\n\n详见【公司经营、估值与市场隐含预期实验室】内嵌完整研究备忘录。`
+  },
+  {
     id: 'note-cmb-valuation-2026',
     isDemo: true,
     title: '招商银行：净息差企稳假说、零售资产质量压力测试与市场隐含预期逆向DCF推演',
