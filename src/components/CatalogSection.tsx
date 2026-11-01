@@ -33,6 +33,7 @@ export const CatalogSection: React.FC<CatalogSectionProps> = ({
   // Dynamic counts derived from PROJECTS
   const totalCount = PROJECTS.length;
   const totalExisting = PROJECTS.filter((p) => p.stage === 'existing').length;
+  const totalPrototype = PROJECTS.filter((p) => p.stage === 'prototype').length;
   const totalPlanned = PROJECTS.filter((p) => p.stage === 'planned').length;
 
   // Filtering
@@ -198,9 +199,9 @@ export const CatalogSection: React.FC<CatalogSectionProps> = ({
             </div>
 
             {/* Stage filter */}
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-slate-400 text-[11px]">建设阶段：</span>
-              <div className="flex items-center bg-hub-card rounded-lg border border-hub-border p-0.5">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-mono text-slate-400 text-[11px]">阶段：</span>
+              <div className="flex items-center bg-hub-card rounded-lg border border-hub-border p-0.5 flex-wrap">
                 <button
                   onClick={() => setStageFilter('all')}
                   className={`px-2 py-0.5 rounded text-[11px] font-mono transition-colors ${
@@ -216,6 +217,14 @@ export const CatalogSection: React.FC<CatalogSectionProps> = ({
                   }`}
                 >
                   已有 ({totalExisting})
+                </button>
+                <button
+                  onClick={() => setStageFilter('prototype')}
+                  className={`px-2 py-0.5 rounded text-[11px] font-mono transition-colors ${
+                    stageFilter === 'prototype' ? 'bg-amber-950/60 text-amber-300 font-semibold' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  原型 ({totalPrototype})
                 </button>
                 <button
                   onClick={() => setStageFilter('planned')}

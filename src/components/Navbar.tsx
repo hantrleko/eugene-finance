@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Compass, Layers, Sparkles, Menu, X, ExternalLink } from 'lucide-react';
+import { Search, Compass, Layers, Sparkles, Menu, X, ExternalLink, ScrollText } from 'lucide-react';
 import { ActiveTab } from '../types';
 
 interface NavbarProps {
@@ -14,6 +14,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, onOpenSe
   const navTabs = [
     { id: 'workbench' as ActiveTab, label: '工作台', icon: Compass },
     { id: 'catalog' as ActiveTab, label: '全部工具', icon: Layers },
+    { id: 'notes' as ActiveTab, label: '研究成果库', icon: ScrollText },
     { id: 'exploration' as ActiveTab, label: '探索与创作', icon: Sparkles },
   ];
 

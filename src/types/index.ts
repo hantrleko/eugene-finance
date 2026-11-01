@@ -8,7 +8,7 @@ export type DomainId =
 
 export type TargetGoal = 'academic' | 'company' | 'investment';
 
-export type Stage = 'existing' | 'planned';
+export type Stage = 'existing' | 'prototype' | 'planned';
 
 export type AccessMode = 'web' | 'local' | 'private' | 'planned';
 
@@ -22,6 +22,23 @@ export interface DomainInfo {
   question: string;
   description: string;
   representativeProjects: string[];
+}
+
+export interface QueryProtocol {
+  tickerParam?: string; // e.g. "ticker"
+  dateParam?: string;   // e.g. "as_of"
+  macroParam?: string;  // e.g. "series"
+  pairParam?: string;   // e.g. "pair"
+  defaultExample?: string;
+  description?: string;
+}
+
+export interface PrototypeInfo {
+  type: 'notebook' | 'doc' | 'model';
+  label: string;
+  url?: string;
+  description: string;
+  snippet?: string;
 }
 
 export interface Project {
@@ -53,6 +70,8 @@ export interface Project {
   playbookIds: string[];
   coverImage?: string;
   initialPinned?: boolean;
+  prototypeInfo?: PrototypeInfo;
+  queryProtocol?: QueryProtocol;
 }
 
 export interface PlaybookStep {
@@ -79,6 +98,26 @@ export interface Playbook {
   templateMarkdown: string;
 }
 
+export interface ResearchNote {
+  id: string;
+  title: string;
+  subtitle: string;
+  date: string;
+  author: string;
+  playbookId: string;
+  playbookLetter: string;
+  playbookTitle: string;
+  domainId: DomainId;
+  domainName: string;
+  associatedProjectIds: string[];
+  targetGoal: TargetGoal;
+  tags: string[];
+  summary: string;
+  keyFindings: string[];
+  metrics?: { label: string; value: string; hint?: string }[];
+  contentMarkdown: string;
+}
+
 export interface MediaItem {
   id: string;
   title: string;
@@ -91,4 +130,4 @@ export interface MediaItem {
   highlightTag?: string;
 }
 
-export type ActiveTab = 'workbench' | 'catalog' | 'exploration';
+export type ActiveTab = 'workbench' | 'catalog' | 'notes' | 'exploration';

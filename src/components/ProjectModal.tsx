@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { X, ExternalLink, Github, Copy, Check, Star, BookOpen, ArrowLeft, Terminal, Globe, Lock, Zap } from 'lucide-react';
-import { Project, Playbook } from '../types';
+import { 
+  X, ExternalLink, Github, Copy, Check, Star, BookOpen, 
+  ArrowLeft, Terminal, Globe, Lock, Zap, Code2, ScrollText, ArrowRight 
+} from 'lucide-react';
+import { Project, Playbook, ResearchNote } from '../types';
 import { PLAYBOOKS } from '../data/playbooks';
+import { RESEARCH_NOTES } from '../data/researchNotes';
 import { prewarmUrl } from '../utils/prewarm';
 
 interface ProjectModalProps {
@@ -14,6 +18,7 @@ interface ProjectModalProps {
   onTogglePin: (id: string) => void;
   onOpenExternal: (project: Project) => void;
   onOpenPlaybook: (playbook: Playbook) => void;
+  onOpenResearchNote?: (note: ResearchNote) => void;
 }
 
 export const ProjectModal: React.FC<ProjectModalProps> = ({
@@ -26,6 +31,7 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
   onTogglePin,
   onOpenExternal,
   onOpenPlaybook,
+  onOpenResearchNote,
 }) => {
   const [copiedCommand, setCopiedCommand] = useState(false);
 
@@ -51,6 +57,7 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
   if (!isOpen || !project) return null;
 
   const isExisting = project.stage === 'existing';
+  const isPrototype = project.stage === 'prototype';
 
   const handleCopyCommand = () => {
     if (project.runCommand) {
@@ -63,6 +70,10 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
   const associatedPlaybooks = PLAYBOOKS.filter((pb) => 
     project.playbookIds.includes(pb.id) ||
     pb.steps.some((s) => s.projectId === project.id)
+  );
+
+  const associatedNotes = RESEARCH_NOTES.filter((n) =>
+    n.associatedProjectIds.includes(project.id)
   );
 
   return (
@@ -102,15 +113,20 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
                   {project.subCategory}
                 </span>
               )}
-              <span
-                className={`text-[10px] font-mono px-2 py-0.5 rounded border ${
-                  isExisting
-                    ? 'bg-emerald-950/60 text-emerald-400 border-emerald-800/40'
-                    : 'bg-slate-800 text-slate-400 border-slate-700'
-                }`}
-              >
-                {isExisting ? '已有版本' : '规划方向'}
-              </span>
+              {isExisting ? (
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded border bg-emerald-950/60 text-emerald-400 border-emerald-800/40">
+                  已有版本
+                </span>
+              ) : isPrototype ? (
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded border bg-amber-950/40 text-amber-300 border-amber-700/50 flex items-center gap-1">
+                  <Code2 className="w-2.5 h-2.5 text-amber-400" />
+                  <span>原型算法就绪</span>
+                </span>
+              ) : (
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded border bg-slate-800 text-slate-400 border-slate-700">
+                  规划方向
+                </span>
+              )}
             </div>
 
             <h2 className="text-xl sm:text-2xl font-bold text-slate-100 flex items-center gap-3">
@@ -137,7 +153,7 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
             <button
               onClick={onClose}
               className="p-2 rounded-lg text-slate-400 hover:text-white bg-hub-bg hover:bg-hub-cardHover border border-hub-border transition-colors"
-              title="关闭详情"
+              title="关闭详情 (Esc)"
             >
               <X className="w-4 h-4" />
             </button>
@@ -168,8 +184,8 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="p-3 rounded-lg bg-hub-card border border-hub-border">
                 <span className="text-[10px] text-slate-400 block font-mono mb-1">建设阶段</span>
-                <span className={`text-xs font-semibold ${isExisting ? 'text-emerald-400' : 'text-slate-300'}`}>
-                  {isExisting ? '已有版本' : '规划编制中'}
+                <span className={`text-xs font-semibold ${isExisting ? 'text-emerald-400' : isPrototype ? 'text-amber-300' : 'text-slate-300'}`}>
+                  {isExisting ? '已有版本' : isPrototype ? '算法原型就绪' : '规划编制中'}
                 </span>
               </div>
               <div className="p-3 rounded-lg bg-hub-card border border-hub-border">
@@ -187,6 +203,8 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
                         <span>静态部署 · 秒级直达</span>
                       </span>
                     )
+                  ) : isPrototype ? (
+                    <span className="text-amber-300">代码原型 / Notebook草稿</span>
                   ) : (
                     <span className="text-slate-300">本地运行环境</span>
                   )}
@@ -200,6 +218,70 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
               </div>
             </div>
           </div>
+
+          {/* Prototype Blueprint & Code Snippet (if prototype) */}
+          {isPrototype && project.prototypeInfo && (
+            <div className="p-4 rounded-xl bg-amber-950/20 border border-amber-700/40 space-y-2.5">
+              <div className="flex items-center gap-2 text-amber-300 text-xs font-bold font-mono">
+                <Code2 className="w-4 h-4" />
+                <span>渐进点亮：算法原型与设计底稿 ({project.prototypeInfo.label})</span>
+              </div>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                {project.prototypeInfo.description}
+              </p>
+              {project.prototypeInfo.snippet && (
+                <div className="p-2.5 rounded-lg bg-hub-bg font-mono text-[11px] text-amber-200/90 overflow-x-auto border border-hub-border/60">
+                  <pre>{project.prototypeInfo.snippet}</pre>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Associated Research Notes (Knowledge Flywheel) */}
+          {associatedNotes.length > 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-xs font-mono text-hub-gold uppercase tracking-wider flex items-center gap-1.5 font-bold">
+                  <ScrollText className="w-3.5 h-3.5" />
+                  <span>使用该工具沉淀的研究成果 ({associatedNotes.length} 篇)</span>
+                </h3>
+              </div>
+              
+              <div className="space-y-2">
+                {associatedNotes.map((note) => (
+                  <div
+                    key={note.id}
+                    onClick={() => {
+                      if (onOpenResearchNote) {
+                        onClose();
+                        onOpenResearchNote(note);
+                      }
+                    }}
+                    className="p-3.5 rounded-xl bg-hub-card hover:bg-hub-cardHover border border-hub-border hover:border-hub-gold/40 transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-3 group"
+                  >
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-mono text-[10px] text-hub-gold bg-hub-gold/10 px-1.5 py-0.2 rounded border border-hub-gold/20">
+                          路径 {note.playbookLetter}
+                        </span>
+                        <span className="font-mono text-[10px] text-slate-400">
+                          {note.date}
+                        </span>
+                      </div>
+                      <h4 className="text-xs font-bold text-slate-100 group-hover:text-hub-goldLight transition-colors">
+                        {note.title}
+                      </h4>
+                    </div>
+
+                    <div className="flex items-center gap-1 text-xs text-hub-gold group-hover:underline flex-shrink-0">
+                      <span>阅读底稿全文</span>
+                      <ArrowRight className="w-3 h-3" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Inputs, Outputs & Scenes */}
           <div>
@@ -225,7 +307,7 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
           {/* Tech Stack & Run Command */}
           <div>
             <h3 className="text-xs font-mono text-slate-400 uppercase tracking-wider mb-2">
-              技术栈与本地启动
+              技术栈与启动方式
             </h3>
             <div className="p-3.5 rounded-lg bg-hub-card border border-hub-border space-y-2">
               <div className="flex items-center justify-between text-xs font-mono">
@@ -278,13 +360,13 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
                   >
                     <div>
                       <span className="font-mono text-[10px] text-hub-gold font-bold block">
-                        路径 {pb.letter} · {pb.title}
+                        路径 {pb.letter}
                       </span>
-                      <span className="text-xs text-slate-300 line-clamp-1 mt-0.5">
-                        交付物：{pb.finalDeliverable}
-                      </span>
+                      <h4 className="text-xs font-semibold text-slate-200 group-hover:text-hub-goldLight">
+                        {pb.title}
+                      </h4>
                     </div>
-                    <BookOpen className="w-4 h-4 text-slate-400 group-hover:text-hub-gold transition-colors flex-shrink-0 ml-2" />
+                    <ArrowRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-hub-gold transition-colors" />
                   </div>
                 ))}
               </div>
@@ -294,18 +376,18 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
         </div>
 
         {/* Footer Actions */}
-        <div className="px-5 py-3.5 sm:px-6 sm:py-4 border-t border-hub-border bg-hub-card flex items-center justify-between gap-3">
+        <div className="px-5 py-3.5 sm:px-6 border-t border-hub-border bg-hub-card flex items-center justify-between text-xs">
           <div className="flex items-center gap-2">
             {project.repoUrl && (
               <a
                 href={project.repoUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-hub-panel hover:bg-hub-cardHover text-xs text-slate-300 hover:text-white border border-hub-border transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-hub-panel hover:bg-hub-card text-slate-300 hover:text-white border border-hub-border transition-colors font-mono"
               >
                 <Github className="w-3.5 h-3.5" />
-                <span>{project.isRepoPrivate ? '私有仓库' : '查看源码'}</span>
-                <ExternalLink className="w-3 h-3" />
+                <span>{project.isRepoPrivate ? '私有代码仓库' : 'GitHub 源码'}</span>
+                <ExternalLink className="w-3 h-3 text-slate-400" />
               </a>
             )}
           </div>
@@ -317,15 +399,15 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
                   onClose();
                   onOpenExternal(project);
                 }}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-hub-teal hover:bg-hub-teal/90 text-slate-950 font-semibold text-xs transition-colors shadow-sm"
+                className="flex items-center gap-1 px-4 py-2 rounded-lg bg-hub-teal hover:bg-hub-tealLight text-slate-950 font-bold transition-all shadow-sm"
               >
-                <span>打开应用</span>
+                <span>立即打开应用</span>
                 <ExternalLink className="w-3.5 h-3.5" />
               </button>
             ) : (
               <button
                 onClick={onClose}
-                className="px-4 py-2 rounded-lg bg-hub-panel hover:bg-hub-card text-slate-300 hover:text-white border border-hub-border text-xs transition-colors"
+                className="px-4 py-2 rounded-lg bg-hub-panel hover:bg-hub-card text-slate-200 border border-hub-border transition-colors"
               >
                 关闭详情
               </button>

@@ -29,7 +29,13 @@ export const PROJECTS: Project[] = [
     applicableScenes: '每日盘前宏观环境扫描、重要数据发布窗口前后风险排查',
     techStack: 'Express + Vite + React + Tailwind CSS',
     playbookIds: ['playbook-c'],
-    initialPinned: true
+    initialPinned: true,
+    queryProtocol: {
+      tickerParam: 'ticker',
+      macroParam: 'series',
+      defaultExample: '600036.SH',
+      description: '支持通过 ?ticker=600036.SH 或 ?series=US10Y 直达资产异动'
+    }
   },
   {
     id: 'quant-risk-lab',
@@ -56,7 +62,12 @@ export const PROJECTS: Project[] = [
     applicableScenes: '历史宏观压力情景回溯、投资组合尾部风险穿透、实证宏观论文时点检验',
     techStack: 'Python 3.12 (uv) + FastAPI + React Vite',
     playbookIds: ['playbook-c'],
-    initialPinned: true
+    initialPinned: true,
+    queryProtocol: {
+      dateParam: 'as_of',
+      defaultExample: '2026-10-30',
+      description: '支持通过 ?as_of=YYYY-MM-DD 锁定历史特定时点无前瞻风险切片'
+    }
   },
   {
     id: 'gpr-haven-lab',
@@ -162,7 +173,12 @@ export const PROJECTS: Project[] = [
     applicableScenes: '公司真实基本面探查、信息披露管理动机研究、学术实证面板构建',
     techStack: 'Python + pdfplumber + Jieba + DuckDB',
     playbookIds: ['playbook-a'],
-    initialPinned: true
+    initialPinned: true,
+    queryProtocol: {
+      tickerParam: 'ticker',
+      defaultExample: '600036.SH',
+      description: '支持通过 ?ticker=600036.SH 直达个股MD&A情绪词谱与文本切片'
+    }
   },
   {
     id: 'company-valuation-implied-expectations',
@@ -176,16 +192,22 @@ export const PROJECTS: Project[] = [
     domainName: '公司与产业',
     targetGoals: ['company', 'investment'],
     methodTags: ['逆向DCF', '单元经济学', 'ROIC-WACC利差', '隐含预期反推'],
-    stage: 'planned',
-    accessMode: 'planned',
-    hostingType: 'planned',
-    verificationStatus: '规划方案编制中',
+    stage: 'prototype',
+    accessMode: 'web',
+    hostingType: 'container',
+    verificationStatus: '算法原型就绪 (Python / Marimo Notebook)',
     inputs: '公司核心经营量价数据、自由现金流拆解表、当前市值与债务总额',
     outputs: '市场隐含预期敏感性矩阵、安全边际打分表、关键经营催化点',
     applicableScenes: '深度个股基本面研究、多空分歧点定量测算',
     techStack: 'Python + DuckDB + Web React Workbench',
     playbookIds: ['playbook-a'],
-    initialPinned: false
+    initialPinned: false,
+    prototypeInfo: {
+      type: 'notebook',
+      label: '交互式逆向DCF求解器 (Python)',
+      description: '已完成反解市场隐含FCF增长率方程的数值求解器与敏感性网格算法原型。',
+      snippet: 'def implied_fcf_growth(market_cap, fcf_base, wacc=0.085, g=0.02, n=5):\n    # 求解使得 PV(FCF) + TV == market_cap 的隐含增速 g_implied\n    ...'
+    }
   },
   {
     id: 'industry-profit-pool-capex',
@@ -199,16 +221,21 @@ export const PROJECTS: Project[] = [
     domainName: '公司与产业',
     targetGoals: ['company', 'investment'],
     methodTags: ['利润池迁移', 'Capex/折旧', '产能利用率', '上下游议价力'],
-    stage: 'planned',
-    accessMode: 'planned',
-    hostingType: 'planned',
-    verificationStatus: '规划方案编制中',
+    stage: 'prototype',
+    accessMode: 'web',
+    hostingType: 'container',
+    verificationStatus: '算法草案就绪 (微笑曲线推演矩阵)',
     inputs: '行业各环节代表上市公司财务摘要、海关进出口高频数据、产能统计',
     outputs: '上下游利润池动态分布桑基图、行业资本开支周期位点指针',
     applicableScenes: '中观行业比较、周期行业左侧布局、成长赛道竞争壁垒评估',
     techStack: 'Python + Pandas + ECharts',
     playbookIds: ['playbook-a'],
-    initialPinned: false
+    initialPinned: false,
+    prototypeInfo: {
+      type: 'doc',
+      label: '微笑曲线利润迁移与Capex时滞矩阵',
+      description: '梳理上下游议价力与在建工程转固周期（4-6季度时滞），已形成半导体与新能源汽车实测参数底稿。'
+    }
   },
   {
     id: 'bank-alm-credit-lab',
@@ -309,7 +336,12 @@ export const PROJECTS: Project[] = [
     applicableScenes: 'AH溢价套利研究、两地金融市场微观分割实证',
     techStack: 'Python + Streamlit + Statsmodels',
     playbookIds: ['playbook-c'],
-    initialPinned: false
+    initialPinned: false,
+    queryProtocol: {
+      pairParam: 'pair',
+      defaultExample: '600036.SH,03968.HK',
+      description: '支持通过 ?pair=A股代码,H股代码 自动载入配对协整检验'
+    }
   },
   {
     id: 'factor-workbench',
@@ -399,16 +431,22 @@ export const PROJECTS: Project[] = [
     domainName: '策略与组合',
     targetGoals: ['investment'],
     methodTags: ['Risk Parity', 'Black-Litterman', 'CVaR风险预算', '边际风险贡献'],
-    stage: 'planned',
-    accessMode: 'planned',
-    hostingType: 'planned',
-    verificationStatus: '规划方案编制中',
+    stage: 'prototype',
+    accessMode: 'web',
+    hostingType: 'container',
+    verificationStatus: '算法原型就绪 (层级风险平价 HRP)',
     inputs: '候选资产收益协方差、主观观点收益与置信度矩阵、总风险预算上限',
     outputs: '目标配置权重表、各大类资产边际风险贡献柱状图、情景压力测试',
     applicableScenes: '大类资产配置方案设计、家族办公室稳健底仓构建',
     techStack: 'Python CVXPY + Web Interactive UI',
     playbookIds: ['playbook-c'],
-    initialPinned: false
+    initialPinned: false,
+    prototypeInfo: {
+      type: 'notebook',
+      label: '无前视层级风险平价模型 (Python)',
+      description: '基于时点协方差矩阵和树状分层聚类，求解等风险贡献(ERC)与风险预算分配。',
+      snippet: 'def get_hrp_weights(cov_matrix):\n    # 1. 聚类分析 2. 准对角化 3. 递归二分法权重分配\n    ...'
+    }
   },
 
   // ==========================================
@@ -517,7 +555,12 @@ export const PROJECTS: Project[] = [
     applicableScenes: '公司重大并购/定增/监管处罚的市场定价效应检验、实证论文撰写',
     techStack: 'Python + Streamlit + AKShare / Baostock',
     playbookIds: ['playbook-b'],
-    initialPinned: false
+    initialPinned: false,
+    queryProtocol: {
+      tickerParam: 'ticker',
+      defaultExample: '600036.SH',
+      description: '支持通过 ?ticker=600036.SH 自动载入事件窗口CAR回归流水线'
+    }
   },
   {
     id: 'cfa-wizard-buddy',
@@ -558,16 +601,21 @@ export const PROJECTS: Project[] = [
     domainName: '学术与学习',
     targetGoals: ['academic'],
     methodTags: ['多期DID', '断点回归RD', '安慰剂检验', '合成控制SCM'],
-    stage: 'planned',
-    accessMode: 'planned',
-    hostingType: 'planned',
-    verificationStatus: '规划方案编制中',
+    stage: 'prototype',
+    accessMode: 'web',
+    hostingType: 'container',
+    verificationStatus: '计量复现包就绪 (交错DID流水线)',
     inputs: '政策外生冲击样本集、对照组与实验组面板数据',
     outputs: '平行趋势检验动态图、反事实估计曲线、异质性与敏感度测试表',
     applicableScenes: '学术课题开题前识别策略论证、SSCI/经济研究实证方法演练',
     techStack: 'R / Python Staggered DID + Quarto / Streamlit',
     playbookIds: ['playbook-b'],
-    initialPinned: false
+    initialPinned: false,
+    prototypeInfo: {
+      type: 'doc',
+      label: '多期交错DID顶刊复现包 (Stata / R)',
+      description: '包含 Callaway & Sant’Anna 异质性处理效应纠偏与500次安慰剂置换检验计量脚本。'
+    }
   },
 
   // ==========================================

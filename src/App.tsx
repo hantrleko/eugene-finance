@@ -2,20 +2,24 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { WorkbenchSection } from './components/WorkbenchSection';
+import { ContextDispatcher } from './components/ContextDispatcher';
 import { PlaybooksSection } from './components/PlaybooksSection';
 import { CatalogSection } from './components/CatalogSection';
+import { ResearchNotesSection } from './components/ResearchNotesSection';
 import { ExplorationSection } from './components/ExplorationSection';
 import { Footer } from './components/Footer';
 import { CommandPalette } from './components/CommandPalette';
 import { ProjectModal } from './components/ProjectModal';
 import { PlaybookModal } from './components/PlaybookModal';
+import { ResearchNoteModal } from './components/ResearchNoteModal';
 import { useWorkbench } from './hooks/useWorkbench';
-import { Project, Playbook, DomainId, TargetGoal, ActiveTab } from './types';
+import { Project, Playbook, ResearchNote, DomainId, TargetGoal, ActiveTab } from './types';
 import { PROJECTS } from './data/projects';
 import { PLAYBOOKS } from './data/playbooks';
-import { ArrowRight, Layers } from 'lucide-react';
+import { RESEARCH_NOTES } from './data/researchNotes';
+import { ArrowRight, Layers, ScrollText, Calendar } from 'lucide-react';
 
-// Hash parsing for deep linking (e.g. #workbench, #catalog?domain=02-company, #project=quant-risk-lab, #playbook=playbook-a)
+// Hash parsing for deep linking (e.g. #workbench, #catalog?domain=02-company, #notes, #note=note-cmb-valuation-2026, #project=quant-risk-lab, #playbook=playbook-a)
 function parseHash(hashStr: string) {
   const clean = hashStr.replace(/^#\/?/, '');
   if (!clean) return { tab: 'workbench' as ActiveTab };
@@ -33,8 +37,14 @@ function parseHash(hashStr: string) {
     return { tab: 'workbench' as ActiveTab, playbookId };
   }
 
+  if (routePart.startsWith('note=') || routePart.startsWith('note/')) {
+    const noteId = routePart.split(/[/=]/)[1];
+    return { tab: 'notes' as ActiveTab, noteId };
+  }
+
   let tab: ActiveTab = 'workbench';
   if (routePart === 'catalog' || routePart === 'tools') tab = 'catalog';
+  else if (routePart === 'notes' || routePart === 'research') tab = 'notes';
   else if (routePart === 'exploration') tab = 'exploration';
 
   return {
@@ -43,6 +53,7 @@ function parseHash(hashStr: string) {
     goal: params.get('goal') as TargetGoal | null,
     projectId: params.get('project'),
     playbookId: params.get('playbook'),
+    noteId: params.get('note'),
   };
 }
 
@@ -60,7 +71,7 @@ export function App() {
     resetPinnedToDefault,
   } = useWorkbench();
 
-  // Active view tab: 'workbench' | 'catalog' | 'exploration'
+  // Active view tab: 'workbench' | 'catalog' | 'notes' | 'exploration'
   const [activeTab, setActiveTab] = useState<ActiveTab>(() => {
     return parseHash(window.location.hash).tab;
   });
@@ -69,6 +80,7 @@ export function App() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [detailProject, setDetailProject] = useState<Project | null>(null);
   const [activePlaybook, setActivePlaybook] = useState<Playbook | null>(null);
+  const [selectedNote, setSelectedNote] = useState<ResearchNote | null>(null);
   const [navigatedFromPlaybook, setNavigatedFromPlaybook] = useState<Playbook | null>(null);
 
   // Filters state in Catalog
@@ -94,6 +106,10 @@ export function App() {
     if (parsed.playbookId) {
       const pb = PLAYBOOKS.find((item) => item.id === parsed.playbookId);
       if (pb) setActivePlaybook(pb);
+    }
+    if (parsed.noteId) {
+      const n = RESEARCH_NOTES.find((item) => item.id === parsed.noteId);
+      if (n) setSelectedNote(n);
     }
   }, []);
 
@@ -131,6 +147,16 @@ export function App() {
 
   const handleClosePlaybookModal = () => {
     setActivePlaybook(null);
+    window.history.replaceState(null, '', `#${activeTab}`);
+  };
+
+  const handleOpenNoteModal = (note: ResearchNote) => {
+    setSelectedNote(note);
+    window.history.replaceState(null, '', `#note=${note.id}`);
+  };
+
+  const handleCloseNoteModal = () => {
+    setSelectedNote(null);
     window.history.replaceState(null, '', `#${activeTab}`);
   };
 
@@ -198,7 +224,7 @@ export function App() {
       <main className="flex-1">
         
         {/* ======================================================== */}
-        {/* VIEW 1: WORKBENCH (默认打开：轻快工作台 + 研究路径) */}
+        {/* VIEW 1: WORKBENCH (轻快工作台 + 参数直达 + 研究路径) */}
         {/* ======================================================== */}
         {activeTab === 'workbench' && (
           <div className="animate-in fade-in duration-200">
@@ -224,6 +250,51 @@ export function App() {
               onImportConfig={importConfig}
               onNavigateToCatalog={() => handleTabChange('catalog')}
             />
+
+            {/* Context Dispatcher (跨系统上下文参数直达 Protocol) */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+              <ContextDispatcher onRecordOpen={recordOpen} />
+            </div>
+
+            {/* Research Notes Preview Strip on Workbench */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-4">
+              <div className="p-4 sm:p-5 rounded-2xl bg-hub-card/60 border border-hub-border flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-hub-gold/15 text-hub-gold flex items-center justify-center border border-hub-gold/30 flex-shrink-0">
+                    <ScrollText className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-sm font-bold text-slate-100">
+                        最新研究底稿与复盘归档
+                      </h4>
+                      <span className="text-[10px] font-mono text-hub-gold bg-hub-gold/10 px-1.5 py-0.2 rounded border border-hub-gold/20">
+                        {RESEARCH_NOTES.length} 篇归档
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-400 mt-0.5 line-clamp-1">
+                      最新：《{RESEARCH_NOTES[0].title}》 · {RESEARCH_NOTES[0].date}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <button
+                    onClick={() => handleOpenNoteModal(RESEARCH_NOTES[0])}
+                    className="px-3 py-1.5 rounded-lg bg-hub-panel hover:bg-hub-card text-xs text-slate-200 border border-hub-border hover:border-slate-500 transition-colors"
+                  >
+                    阅读最新一篇
+                  </button>
+                  <button
+                    onClick={() => handleTabChange('notes')}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-hub-gold hover:bg-hub-goldLight text-slate-950 font-semibold text-xs transition-colors shadow-sm"
+                  >
+                    <span>进入研究成果库</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            </div>
 
             {/* Research Playbooks (三条首发研究路径) */}
             <PlaybooksSection
@@ -284,7 +355,19 @@ export function App() {
         )}
 
         {/* ======================================================== */}
-        {/* VIEW 3: EXPLORATION (探索与创作：历史地理自然 + 媒体空间) */}
+        {/* VIEW 3: RESEARCH NOTES (研究成果与复盘库 · 知识飞轮) */}
+        {/* ======================================================== */}
+        {activeTab === 'notes' && (
+          <div className="animate-in fade-in duration-200">
+            <ResearchNotesSection
+              onSelectNote={handleOpenNoteModal}
+              onSelectProject={handleOpenDetailModal}
+            />
+          </div>
+        )}
+
+        {/* ======================================================== */}
+        {/* VIEW 4: EXPLORATION (探索与创作：历史地理自然 + 媒体空间) */}
         {/* ======================================================== */}
         {activeTab === 'exploration' && (
           <div className="animate-in fade-in duration-200">
@@ -326,6 +409,11 @@ export function App() {
           setNavigatedFromPlaybook(null);
           handleOpenPlaybookModal(pb);
         }}
+        onOpenResearchNote={(note) => {
+          setDetailProject(null);
+          setNavigatedFromPlaybook(null);
+          handleOpenNoteModal(note);
+        }}
       />
 
       {/* Playbook Detailed Modal */}
@@ -333,6 +421,14 @@ export function App() {
         playbook={activePlaybook}
         onClose={handleClosePlaybookModal}
         onSelectProjectFromPlaybook={handleSelectProjectFromPlaybook}
+        onOpenProjectExternal={handleOpenProjectExternal}
+      />
+
+      {/* Research Note Reading Modal */}
+      <ResearchNoteModal
+        note={selectedNote}
+        onClose={handleCloseNoteModal}
+        onSelectProject={handleOpenDetailModal}
         onOpenProjectExternal={handleOpenProjectExternal}
       />
 

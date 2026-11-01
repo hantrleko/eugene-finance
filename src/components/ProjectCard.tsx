@@ -1,5 +1,5 @@
 import React from 'react';
-import { Star, ExternalLink, Info, Terminal, Globe, Lock, Clock, Zap } from 'lucide-react';
+import { Star, ExternalLink, Info, Terminal, Globe, Lock, Clock, Zap, Code2 } from 'lucide-react';
 import { Project } from '../types';
 import { prewarmUrl } from '../utils/prewarm';
 
@@ -19,6 +19,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   onOpenProjectExternal,
 }) => {
   const isExisting = project.stage === 'existing';
+  const isPrototype = project.stage === 'prototype';
 
   const renderAccessBadge = () => {
     if (project.officialUrl) {
@@ -132,15 +133,20 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         {/* Status bar */}
         <div className="pt-3 border-t border-hub-border/60 mb-3 flex items-center justify-between text-[11px] flex-wrap gap-1">
           <div className="flex items-center gap-1.5">
-            <span
-              className={`text-[10px] font-mono px-1.5 py-0.5 rounded border ${
-                isExisting
-                  ? 'bg-emerald-950/60 text-emerald-400 border-emerald-800/40'
-                  : 'bg-slate-800 text-slate-400 border-slate-700'
-              }`}
-            >
-              {isExisting ? '已有版本' : '规划中'}
-            </span>
+            {isExisting ? (
+              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded border bg-emerald-950/60 text-emerald-400 border-emerald-800/40">
+                已有版本
+              </span>
+            ) : isPrototype ? (
+              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded border bg-amber-950/40 text-amber-300 border-amber-700/50 flex items-center gap-1">
+                <Code2 className="w-2.5 h-2.5 text-amber-400" />
+                <span>原型算法</span>
+              </span>
+            ) : (
+              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded border bg-slate-800 text-slate-400 border-slate-700">
+                规划中
+              </span>
+            )}
             {renderAccessBadge()}
           </div>
 
@@ -186,6 +192,14 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 本地运行
               </button>
             )
+          ) : isPrototype ? (
+            <button
+              onClick={() => onSelectProject(project)}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-950/40 hover:bg-amber-900/40 text-amber-300 hover:text-amber-200 border border-amber-700/50 transition-colors text-xs font-medium"
+            >
+              <Code2 className="w-3 h-3 text-amber-400" />
+              <span>查看算法原型</span>
+            </button>
           ) : (
             <button
               onClick={() => onSelectProject(project)}
