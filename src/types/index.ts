@@ -130,4 +130,4 @@ export interface MediaItem {
   highlightTag?: string;
 }
 
-export type ActiveTab = 'workbench' | 'catalog' | 'notes' | 'exploration';
+export type ActiveTab = 'workbench' | 'catalog' | 'notes' | 'contracts' | 'exploration';

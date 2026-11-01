@@ -6,6 +6,7 @@ import { ContextDispatcher } from './components/ContextDispatcher';
 import { PlaybooksSection } from './components/PlaybooksSection';
 import { CatalogSection } from './components/CatalogSection';
 import { ResearchNotesSection } from './components/ResearchNotesSection';
+import { DataContractsSection } from './components/DataContractsSection';
 import { ExplorationSection } from './components/ExplorationSection';
 import { Footer } from './components/Footer';
 import { CommandPalette } from './components/CommandPalette';
@@ -45,6 +46,7 @@ function parseHash(hashStr: string) {
   let tab: ActiveTab = 'workbench';
   if (routePart === 'catalog' || routePart === 'tools') tab = 'catalog';
   else if (routePart === 'notes' || routePart === 'research') tab = 'notes';
+  else if (routePart === 'contracts' || routePart === 'data') tab = 'contracts';
   else if (routePart === 'exploration') tab = 'exploration';
 
   return {
@@ -361,6 +363,17 @@ export function App() {
           <div className="animate-in fade-in duration-200">
             <ResearchNotesSection
               onSelectNote={handleOpenNoteModal}
+              onSelectProject={handleOpenDetailModal}
+            />
+          </div>
+        )}
+
+        {/* ======================================================== */}
+        {/* VIEW 4: DATA CONTRACTS (数据契约与跨项目转接中心 V3.0) */}
+        {/* ======================================================== */}
+        {activeTab === 'contracts' && (
+          <div className="animate-in fade-in duration-200">
+            <DataContractsSection
               onSelectProject={handleOpenDetailModal}
             />
           </div>
