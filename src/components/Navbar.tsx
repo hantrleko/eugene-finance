@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { Search, Compass, Layers, Sparkles, Menu, X, ExternalLink, ScrollText, Database } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Compass, Layers, Sparkles, Menu, X, ExternalLink, ScrollText, Database, Sun, Moon } from 'lucide-react';
 import { ActiveTab } from '../types';
+import { useToast } from '../context/ToastContext';
 
 interface NavbarProps {
   activeTab: ActiveTab;
@@ -10,13 +11,46 @@ interface NavbarProps {
 
 export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, onOpenSearch }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { info } = useToast();
+
+  const [theme, setTheme] = useState<'dark' | 'paper'>(() => {
+    try {
+      const saved = localStorage.getItem('ef_theme');
+      if (saved === 'paper' || saved === 'dark') return saved;
+    } catch {
+      // ignore
+    }
+    return 'dark';
+  });
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === 'paper') {
+      root.classList.add('paper');
+      root.classList.remove('dark');
+    } else {
+      root.classList.add('dark');
+      root.classList.remove('paper');
+    }
+    try {
+      localStorage.setItem('ef_theme', theme);
+    } catch {
+      // ignore
+    }
+  }, [theme]);
+
+  const toggleTheme = () => {
+    const next = theme === 'dark' ? 'paper' : 'dark';
+    setTheme(next);
+    info(next === 'paper' ? '已切换至 刊物暖纸 (Editorial Paper) 阅读模式' : '已切换至 曜石暗色 (Obsidian Dark) 工作台模式');
+  };
 
   const navTabs = [
-    { id: 'workbench' as ActiveTab, label: '工作台', icon: Compass },
-    { id: 'catalog' as ActiveTab, label: '全部工具', icon: Layers },
-    { id: 'notes' as ActiveTab, label: '研究成果库', icon: ScrollText },
-    { id: 'contracts' as ActiveTab, label: '数据契约', icon: Database },
-    { id: 'exploration' as ActiveTab, label: '探索与创作', icon: Sparkles },
+    { id: 'workbench' as ActiveTab, label: '工作台', icon: Compass, shortcut: 'Alt+1' },
+    { id: 'catalog' as ActiveTab, label: '全部工具', icon: Layers, shortcut: 'Alt+2' },
+    { id: 'notes' as ActiveTab, label: '成果库', icon: ScrollText, shortcut: 'Alt+3' },
+    { id: 'contracts' as ActiveTab, label: '数据契约', icon: Database, shortcut: 'Alt+4' },
+    { id: 'exploration' as ActiveTab, label: '探索创作', icon: Sparkles, shortcut: 'Alt+5' },
   ];
 
   const handleTabClick = (tab: ActiveTab) => {
@@ -95,6 +129,25 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, onOpenSe
             <kbd className="hidden sm:inline-block font-mono text-[10px] px-1.5 py-0.2 rounded bg-hub-bg border border-hub-border text-slate-400 group-hover:text-hub-gold">
               Ctrl K
             </kbd>
+          </button>
+
+          {/* Theme Switcher Button */}
+          <button
+            onClick={toggleTheme}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-hub-panel/80 hover:bg-hub-panel border border-hub-border hover:border-hub-gold/40 text-slate-300 text-xs transition-colors"
+            title={theme === 'dark' ? '切换为刊物暖纸 (Editorial Paper) 阅读模式' : '切换为曜石暗色 (Obsidian Dark) 模式'}
+          >
+            {theme === 'dark' ? (
+              <>
+                <Sun className="w-3.5 h-3.5 text-hub-gold" />
+                <span className="hidden xl:inline text-[11px] font-mono text-slate-400">暖纸</span>
+              </>
+            ) : (
+              <>
+                <Moon className="w-3.5 h-3.5 text-slate-700" />
+                <span className="hidden xl:inline text-[11px] font-mono text-slate-600">暗色</span>
+              </>
+            )}
           </button>
 
           {/* EF Lab external link */}

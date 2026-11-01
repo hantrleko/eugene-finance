@@ -162,12 +162,32 @@ export function App() {
     window.history.replaceState(null, '', `#${activeTab}`);
   };
 
-  // Global Keyboard shortcuts: Ctrl+K / Cmd+K
+  // Global Keyboard shortcuts: Ctrl+K / Cmd+K and Alt+1~5 tab switching
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         setIsSearchOpen(true);
+        return;
+      }
+
+      if (e.altKey && !e.ctrlKey && !e.metaKey) {
+        if (e.key === '1') {
+          e.preventDefault();
+          handleTabChange('workbench');
+        } else if (e.key === '2') {
+          e.preventDefault();
+          handleTabChange('catalog');
+        } else if (e.key === '3') {
+          e.preventDefault();
+          handleTabChange('notes');
+        } else if (e.key === '4') {
+          e.preventDefault();
+          handleTabChange('contracts');
+        } else if (e.key === '5') {
+          e.preventDefault();
+          handleTabChange('exploration');
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -211,6 +231,23 @@ export function App() {
       window.history.replaceState(null, '', `#playbook=${pb.id}`);
     }
   };
+
+  // Sequential browsing in Project Specification Drawer
+  const currentProjectIndex = detailProject
+    ? PROJECTS.findIndex((p) => p.id === detailProject.id)
+    : -1;
+
+  const handlePrevProject = useCallback(() => {
+    if (currentProjectIndex < 0) return;
+    const prevIndex = (currentProjectIndex - 1 + PROJECTS.length) % PROJECTS.length;
+    handleOpenDetailModal(PROJECTS[prevIndex]);
+  }, [currentProjectIndex]);
+
+  const handleNextProject = useCallback(() => {
+    if (currentProjectIndex < 0) return;
+    const nextIndex = (currentProjectIndex + 1) % PROJECTS.length;
+    handleOpenDetailModal(PROJECTS[nextIndex]);
+  }, [currentProjectIndex]);
 
   return (
     <div className="min-h-screen bg-hub-bg text-hub-text flex flex-col font-sans selection:bg-hub-gold/25 selection:text-hub-goldLight">
@@ -427,6 +464,10 @@ export function App() {
           setNavigatedFromPlaybook(null);
           handleOpenNoteModal(note);
         }}
+        onPrevProject={handlePrevProject}
+        onNextProject={handleNextProject}
+        currentIndex={currentProjectIndex}
+        totalProjects={PROJECTS.length}
       />
 
       {/* Playbook Detailed Modal */}
