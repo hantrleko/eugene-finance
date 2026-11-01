@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, ExternalLink, Github, Terminal, Copy, Check, Star, BookOpen, Layers, CheckCircle2, Clock } from 'lucide-react';
+import { X, ExternalLink, Github, Copy, Check, Star, BookOpen, ArrowLeft, Terminal, Globe, Lock } from 'lucide-react';
 import { Project, Playbook } from '../types';
 import { PLAYBOOKS } from '../data/playbooks';
 
@@ -7,6 +7,8 @@ interface ProjectModalProps {
   project: Project | null;
   isOpen: boolean;
   onClose: () => void;
+  fromPlaybook?: Playbook | null;
+  onBackToPlaybook?: () => void;
   isPinned: boolean;
   onTogglePin: (id: string) => void;
   onOpenExternal: (project: Project) => void;
@@ -17,6 +19,8 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
   project,
   isOpen,
   onClose,
+  fromPlaybook,
+  onBackToPlaybook,
   isPinned,
   onTogglePin,
   onOpenExternal,
@@ -42,13 +46,32 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
   );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150"
+      onClick={onClose}
+    >
       <div 
         className="relative w-full max-w-3xl bg-hub-panel border border-hub-border rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Back to Playbook banner if navigated from Playbook */}
+        {fromPlaybook && onBackToPlaybook && (
+          <div className="px-5 py-2.5 bg-hub-gold/15 border-b border-hub-gold/30 flex items-center justify-between">
+            <button
+              onClick={onBackToPlaybook}
+              className="flex items-center gap-1.5 text-xs font-medium text-hub-gold hover:text-white transition-colors"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>返回研究路径：路径 {fromPlaybook.letter} · {fromPlaybook.title}</span>
+            </button>
+            <span className="text-[10px] font-mono text-hub-gold/80">
+              单弹窗流转模式
+            </span>
+          </div>
+        )}
+
         {/* Header */}
-        <div className="px-6 py-5 border-b border-hub-border bg-hub-card flex items-start justify-between">
+        <div className="px-5 py-4 sm:px-6 sm:py-5 border-b border-hub-border bg-hub-card flex items-start justify-between">
           <div className="flex-1 pr-4">
             <div className="flex items-center gap-2 mb-1.5 flex-wrap">
               <span className="font-mono text-xs px-2 py-0.5 rounded bg-hub-gold/15 text-hub-gold border border-hub-gold/30 font-bold">
@@ -94,6 +117,7 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
             <button
               onClick={onClose}
               className="p-2 rounded-lg text-slate-400 hover:text-white bg-hub-bg hover:bg-hub-cardHover border border-hub-border transition-colors"
+              title="关闭详情"
             >
               <X className="w-4 h-4" />
             </button>
@@ -101,12 +125,12 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
         </div>
 
         {/* Content Body */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6">
           
           {/* Summary & Description */}
           <div>
             <h3 className="text-xs font-mono text-slate-400 uppercase tracking-wider mb-1.5">
-              一句话用途与系统定位
+              这个工具做什么
             </h3>
             <p className="text-sm font-semibold text-hub-goldLight mb-2 leading-relaxed">
               {project.summary}
@@ -116,29 +140,26 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
             </p>
           </div>
 
-          {/* Three Dimensional Status Grid */}
+          {/* Usage & Access Mode */}
           <div>
             <h3 className="text-xs font-mono text-slate-400 uppercase tracking-wider mb-2">
-              三维状态与访问特征
+              使用方式
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="p-3 rounded-lg bg-hub-card border border-hub-border">
                 <span className="text-[10px] text-slate-400 block font-mono mb-1">建设阶段</span>
                 <span className={`text-xs font-semibold ${isExisting ? 'text-emerald-400' : 'text-slate-300'}`}>
-                  {isExisting ? '已有版本 (Active / Developed)' : '规划编制中 (Planned)'}
+                  {isExisting ? '已有版本' : '规划编制中'}
                 </span>
               </div>
               <div className="p-3 rounded-lg bg-hub-card border border-hub-border">
-                <span className="text-[10px] text-slate-400 block font-mono mb-1">访问方式</span>
+                <span className="text-[10px] text-slate-400 block font-mono mb-1">访问渠道</span>
                 <span className="text-xs font-semibold text-slate-200">
-                  {project.accessMode === 'web' && '公开线上网址 (Web / Pages)'}
-                  {project.accessMode === 'local' && '本地部署运行 (CLI / Server)'}
-                  {project.accessMode === 'private' && '私有代码库 (Private Repo)'}
-                  {project.accessMode === 'planned' && '方案规划编制中'}
+                  {project.officialUrl ? '线上在线应用' : '本地运行环境'}
                 </span>
               </div>
               <div className="p-3 rounded-lg bg-hub-card border border-hub-border">
-                <span className="text-[10px] text-slate-400 block font-mono mb-1">入口核验说明</span>
+                <span className="text-[10px] text-slate-400 block font-mono mb-1">核验状态</span>
                 <span className="text-xs font-semibold text-hub-goldLight truncate block" title={project.verificationStatus}>
                   {project.verificationStatus}
                 </span>
@@ -149,19 +170,19 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
           {/* Inputs, Outputs & Scenes */}
           <div>
             <h3 className="text-xs font-mono text-slate-400 uppercase tracking-wider mb-2">
-              研发生态规范 (I/O & Applications)
+              输入与输出
             </h3>
             <div className="space-y-2.5 text-xs">
               <div className="p-3 rounded-lg bg-hub-card/70 border border-hub-border/70 flex flex-col sm:flex-row sm:items-start gap-2">
-                <span className="font-mono text-slate-400 sm:w-24 flex-shrink-0">需要输入：</span>
+                <span className="font-mono text-slate-400 sm:w-20 flex-shrink-0">输入数据：</span>
                 <span className="text-slate-200 flex-1">{project.inputs}</span>
               </div>
               <div className="p-3 rounded-lg bg-hub-card/70 border border-hub-border/70 flex flex-col sm:flex-row sm:items-start gap-2">
-                <span className="font-mono text-slate-400 sm:w-24 flex-shrink-0">产出结果：</span>
+                <span className="font-mono text-slate-400 sm:w-20 flex-shrink-0">输出成果：</span>
                 <span className="text-slate-200 flex-1">{project.outputs}</span>
               </div>
               <div className="p-3 rounded-lg bg-hub-card/70 border border-hub-border/70 flex flex-col sm:flex-row sm:items-start gap-2">
-                <span className="font-mono text-slate-400 sm:w-24 flex-shrink-0">适用场景：</span>
+                <span className="font-mono text-slate-400 sm:w-20 flex-shrink-0">适用场景：</span>
                 <span className="text-slate-200 flex-1">{project.applicableScenes}</span>
               </div>
             </div>
@@ -174,7 +195,7 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
             </h3>
             <div className="p-3.5 rounded-lg bg-hub-card border border-hub-border space-y-2">
               <div className="flex items-center justify-between text-xs font-mono">
-                <span className="text-slate-400">底层技术栈：</span>
+                <span className="text-slate-400">底层技术：</span>
                 <span className="text-slate-200 font-semibold">{project.techStack}</span>
               </div>
 
@@ -197,7 +218,7 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
                       <span>{copiedCommand ? '已复制' : '复制命令'}</span>
                     </button>
                   </div>
-                  <pre className="p-2.5 rounded bg-hub-bg font-mono text-xs text-hub-tealLight overflow-x-auto">
+                  <pre className="p-2.5 rounded bg-hub-bg font-mono text-xs text-hub-tealLight overflow-x-auto select-all">
                     {project.runCommand}
                   </pre>
                 </div>
@@ -209,7 +230,7 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
           {associatedPlaybooks.length > 0 && (
             <div>
               <h3 className="text-xs font-mono text-slate-400 uppercase tracking-wider mb-2">
-                参与的研究路径 (Connected Playbooks)
+                参与的研究路径
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 {associatedPlaybooks.map((pb) => (
@@ -239,7 +260,7 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
         </div>
 
         {/* Footer Actions */}
-        <div className="px-6 py-4 border-t border-hub-border bg-hub-card flex items-center justify-between gap-3">
+        <div className="px-5 py-3.5 sm:px-6 sm:py-4 border-t border-hub-border bg-hub-card flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             {project.repoUrl && (
               <a
@@ -249,13 +270,14 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-hub-panel hover:bg-hub-cardHover text-xs text-slate-300 hover:text-white border border-hub-border transition-colors"
               >
                 <Github className="w-3.5 h-3.5" />
-                <span>查看源码仓库</span>
+                <span>{project.isRepoPrivate ? '私有仓库' : '查看源码'}</span>
+                <ExternalLink className="w-3 h-3" />
               </a>
             )}
           </div>
 
           <div className="flex items-center gap-2">
-            {isExisting && (project.officialUrl || project.repoUrl) ? (
+            {isExisting && project.officialUrl ? (
               <button
                 onClick={() => {
                   onClose();
@@ -263,15 +285,15 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
                 }}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-hub-teal hover:bg-hub-teal/90 text-slate-950 font-semibold text-xs transition-colors shadow-sm"
               >
-                <span>立即打开项目</span>
+                <span>打开应用</span>
                 <ExternalLink className="w-3.5 h-3.5" />
               </button>
             ) : (
               <button
                 onClick={onClose}
-                className="px-4 py-2 rounded-lg bg-hub-gold/20 text-hub-gold border border-hub-gold/30 text-xs font-semibold hover:bg-hub-gold/30 transition-colors"
+                className="px-4 py-2 rounded-lg bg-hub-panel hover:bg-hub-card text-slate-300 hover:text-white border border-hub-border text-xs transition-colors"
               >
-                方案已备忘 · 建设清单就绪
+                关闭详情
               </button>
             )}
           </div>

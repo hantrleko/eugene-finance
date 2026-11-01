@@ -20,8 +20,6 @@ export interface DomainInfo {
   question: string;
   description: string;
   representativeProjects: string[];
-  existingCount: number;
-  plannedCount: number;
 }
 
 export interface Project {
@@ -41,6 +39,7 @@ export interface Project {
   accessMode: AccessMode;
   officialUrl?: string;
   repoUrl?: string;
+  isRepoPrivate?: boolean;
   localPath?: string;
   verificationStatus: string;
   runCommand?: string;
@@ -88,3 +87,5 @@ export interface MediaItem {
   link?: string;
   highlightTag?: string;
 }
+
+export type ActiveTab = 'workbench' | 'catalog' | 'exploration';

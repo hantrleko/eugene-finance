@@ -1,5 +1,5 @@
 import React from 'react';
-import { Star, ExternalLink, Info, CheckCircle, Clock, Terminal, Globe, Lock } from 'lucide-react';
+import { Star, ExternalLink, Info, Terminal, Globe, Lock, Clock } from 'lucide-react';
 import { Project } from '../types';
 
 interface ProjectCardProps {
@@ -19,43 +19,41 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
 }) => {
   const isExisting = project.stage === 'existing';
 
-  // Access mode badge
   const renderAccessBadge = () => {
-    switch (project.accessMode) {
-      case 'web':
-        return (
-          <span className="flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded bg-cyan-950/40 text-cyan-400 border border-cyan-800/40">
-            <Globe className="w-2.5 h-2.5" />
-            <span>公开网址</span>
-          </span>
-        );
-      case 'local':
-        return (
-          <span className="flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded bg-indigo-950/40 text-indigo-300 border border-indigo-800/40">
-            <Terminal className="w-2.5 h-2.5" />
-            <span>本地运行</span>
-          </span>
-        );
-      case 'private':
-        return (
-          <span className="flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded bg-purple-950/40 text-purple-300 border border-purple-800/40">
-            <Lock className="w-2.5 h-2.5" />
-            <span>私有代码库</span>
-          </span>
-        );
-      case 'planned':
-      default:
-        return (
-          <span className="flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
-            <Clock className="w-2.5 h-2.5" />
-            <span>方案规划</span>
-          </span>
-        );
+    if (project.officialUrl) {
+      return (
+        <span className="flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded bg-cyan-950/40 text-cyan-400 border border-cyan-800/40">
+          <Globe className="w-2.5 h-2.5" />
+          <span>线上应用</span>
+        </span>
+      );
     }
+    if (project.accessMode === 'private' || project.isRepoPrivate) {
+      return (
+        <span className="flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded bg-purple-950/40 text-purple-300 border border-purple-800/40">
+          <Lock className="w-2.5 h-2.5" />
+          <span>私有仓库</span>
+        </span>
+      );
+    }
+    if (project.accessMode === 'local') {
+      return (
+        <span className="flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded bg-indigo-950/40 text-indigo-300 border border-indigo-800/40">
+          <Terminal className="w-2.5 h-2.5" />
+          <span>本地运行</span>
+        </span>
+      );
+    }
+    return (
+      <span className="flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
+        <Clock className="w-2.5 h-2.5" />
+        <span>规划方向</span>
+      </span>
+    );
   };
 
   return (
-    <div className="group relative flex flex-col justify-between p-5 rounded-xl bg-hub-card/85 hover:bg-hub-cardHover border border-hub-border hover:border-hub-borderHover transition-all duration-200 shadow-sm hover:shadow-subtle">
+    <div className="group relative flex flex-col justify-between p-5 rounded-xl bg-hub-card/85 hover:bg-hub-cardHover border border-hub-border hover:border-hub-borderHover transition-all duration-150 shadow-sm">
       
       <div>
         {/* Top bar with Domain + SubCategory + Pin Button */}
@@ -85,7 +83,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         </div>
 
         {/* Project Titles */}
-        <div className="mb-2.5">
+        <div className="mb-2">
           <h3 
             onClick={() => onSelectProject(project)}
             className="text-base font-bold text-slate-100 group-hover:text-hub-goldLight cursor-pointer transition-colors"
@@ -116,7 +114,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
       </div>
 
       <div>
-        {/* Status dimensions bar */}
+        {/* Status bar */}
         <div className="pt-3 border-t border-hub-border/60 mb-3 flex items-center justify-between text-[11px] flex-wrap gap-1">
           <div className="flex items-center gap-1.5">
             <span
@@ -147,20 +145,30 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
           </button>
 
           {isExisting ? (
-            (project.officialUrl || project.repoUrl) ? (
+            project.officialUrl ? (
               <button
                 onClick={() => onOpenProjectExternal(project)}
                 className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-hub-teal/20 hover:bg-hub-teal/30 text-hub-tealLight hover:text-white border border-hub-teal/40 font-medium transition-colors text-xs"
               >
-                <span>打开项目</span>
+                <span>打开应用</span>
                 <ExternalLink className="w-3 h-3" />
               </button>
+            ) : project.repoUrl ? (
+              <a
+                href={project.repoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-hub-panel hover:bg-hub-card text-slate-300 hover:text-white border border-hub-border transition-colors text-xs"
+              >
+                <span>{project.isRepoPrivate ? '私有仓库' : '查看源码'}</span>
+                <ExternalLink className="w-3 h-3" />
+              </a>
             ) : (
               <button
                 onClick={() => onSelectProject(project)}
                 className="text-xs text-slate-400 hover:text-slate-200"
               >
-                查看代码库
+                本地运行
               </button>
             )
           ) : (

@@ -6,14 +6,14 @@ import { PROJECTS } from '../data/projects';
 interface PlaybookModalProps {
   playbook: Playbook | null;
   onClose: () => void;
-  onSelectProject: (project: Project) => void;
+  onSelectProjectFromPlaybook: (project: Project, playbook: Playbook) => void;
   onOpenProjectExternal: (project: Project) => void;
 }
 
 export const PlaybookModal: React.FC<PlaybookModalProps> = ({
   playbook,
   onClose,
-  onSelectProject,
+  onSelectProjectFromPlaybook,
   onOpenProjectExternal,
 }) => {
   const [copied, setCopied] = useState(false);
@@ -28,13 +28,16 @@ export const PlaybookModal: React.FC<PlaybookModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150"
+      onClick={onClose}
+    >
       <div 
         className="relative w-full max-w-4xl bg-hub-panel border border-hub-border rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-6 py-5 border-b border-hub-border bg-hub-card flex items-start justify-between">
+        <div className="px-5 py-4 sm:px-6 sm:py-5 border-b border-hub-border bg-hub-card flex items-start justify-between">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="font-mono text-xs px-2 py-0.5 rounded bg-hub-gold/15 text-hub-gold border border-hub-gold/30 font-bold">
@@ -54,14 +57,15 @@ export const PlaybookModal: React.FC<PlaybookModalProps> = ({
 
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-hub-cardHover border border-transparent hover:border-hub-border transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-hub-cardHover border border-transparent hover:border-hub-border transition-colors flex-shrink-0"
+            title="关闭窗口"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Deliverable Callout Banner */}
-        <div className="px-6 py-3 bg-gradient-to-r from-hub-gold/10 via-hub-teal/10 to-transparent border-b border-hub-border flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div className="px-5 py-3 sm:px-6 bg-gradient-to-r from-hub-gold/10 via-hub-teal/10 to-transparent border-b border-hub-border flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="flex items-center gap-2 text-xs">
             <span className="font-mono text-hub-gold font-semibold uppercase">终点交付成果：</span>
             <span className="font-bold text-slate-100">{playbook.finalDeliverable}</span>
@@ -94,15 +98,15 @@ export const PlaybookModal: React.FC<PlaybookModalProps> = ({
         </div>
 
         {/* Content Body */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-5 sm:p-6">
           {activeTab === 'steps' ? (
-            <div className="space-y-6">
+            <div className="space-y-5">
               
               {/* Note on first-edition boundary */}
               <div className="flex items-start gap-3 p-3.5 rounded-lg bg-hub-bg/70 border border-hub-border/60 text-xs text-slate-300 leading-relaxed">
                 <AlertCircle className="w-4 h-4 text-hub-gold flex-shrink-0 mt-0.5" />
                 <p>
-                  <strong>第一版工作台指引：</strong> 本路径是规范化步骤导航与任务说明。点击“进入工具”抵达对应子系统进行独立计算；规划中步骤提供严谨的任务指导，不设虚假一键按钮。
+                  <strong>研究路径说明：</strong> 本路径是规范化步骤导航与任务说明。点击“打开应用”直达在线运行系统；规划中的模块提供实操任务指导。
                 </p>
               </div>
 
@@ -132,7 +136,7 @@ export const PlaybookModal: React.FC<PlaybookModalProps> = ({
                                 : 'bg-slate-800 text-slate-400 border-slate-700'
                             }`}
                           >
-                            {isExisting ? '已有工具 · 可直接运行' : '规划模块 · 任务指导'}
+                            {isExisting ? '已有工具' : '规划模块'}
                           </span>
                         </div>
 
@@ -156,29 +160,30 @@ export const PlaybookModal: React.FC<PlaybookModalProps> = ({
                         </div>
                       </div>
 
-                      {/* Tool Action Button */}
+                      {/* Tool Action Buttons */}
                       <div className="flex md:flex-col items-center justify-end gap-2 flex-shrink-0 pt-2 md:pt-0">
                         {project ? (
                           <>
-                            <button
-                              onClick={() => {
-                                onSelectProject(project);
-                              }}
-                              className="px-3 py-1.5 rounded-lg bg-hub-panel hover:bg-hub-card text-xs text-slate-200 border border-hub-border hover:border-slate-500 transition-colors"
-                            >
-                              查看规格
-                            </button>
-                            {isExisting && (project.officialUrl || project.repoUrl) && (
+                            {isExisting && project.officialUrl && (
                               <button
                                 onClick={() => {
                                   onOpenProjectExternal(project);
                                 }}
-                                className="px-3 py-1.5 rounded-lg bg-hub-teal/20 hover:bg-hub-teal/30 text-xs text-hub-tealLight hover:text-white border border-hub-teal/40 transition-colors flex items-center gap-1 font-medium"
+                                className="w-full px-3 py-1.5 rounded-lg bg-hub-teal/20 hover:bg-hub-teal/30 text-xs text-hub-tealLight hover:text-white border border-hub-teal/40 transition-colors flex items-center justify-center gap-1 font-medium"
                               >
-                                <span>进入工具</span>
+                                <span>打开应用</span>
                                 <ExternalLink className="w-3 h-3" />
                               </button>
                             )}
+
+                            <button
+                              onClick={() => {
+                                onSelectProjectFromPlaybook(project, playbook);
+                              }}
+                              className="w-full px-3 py-1.5 rounded-lg bg-hub-panel hover:bg-hub-card text-xs text-slate-200 border border-hub-border hover:border-slate-500 transition-colors"
+                            >
+                              查看详情
+                            </button>
                           </>
                         ) : (
                           <span className="text-xs font-mono text-slate-400">
@@ -195,7 +200,7 @@ export const PlaybookModal: React.FC<PlaybookModalProps> = ({
           ) : (
             /* Standard Deliverable Markdown Template */
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <h3 className="text-sm font-semibold text-slate-200">
                     {playbook.finalDeliverable}
@@ -207,7 +212,7 @@ export const PlaybookModal: React.FC<PlaybookModalProps> = ({
 
                 <button
                   onClick={handleCopy}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-hub-gold hover:bg-hub-goldLight text-slate-950 font-semibold text-xs transition-colors shadow-sm"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-hub-gold hover:bg-hub-goldLight text-slate-950 font-semibold text-xs transition-colors shadow-sm self-start sm:self-auto"
                 >
                   {copied ? (
                     <>
@@ -217,7 +222,7 @@ export const PlaybookModal: React.FC<PlaybookModalProps> = ({
                   ) : (
                     <>
                       <Copy className="w-3.5 h-3.5" />
-                      <span>一键复制 Markdown 模板</span>
+                      <span>复制 Markdown 模板</span>
                     </>
                   )}
                 </button>
@@ -233,13 +238,13 @@ export const PlaybookModal: React.FC<PlaybookModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-3 border-t border-hub-border bg-hub-card flex items-center justify-between text-xs font-mono text-slate-400">
-          <span>完成本研究路径将沉淀完整证据包</span>
+        <div className="px-5 py-3 sm:px-6 border-t border-hub-border bg-hub-card flex items-center justify-between text-xs font-mono text-slate-400">
+          <span>完成本路径将输出标准化研究备忘</span>
           <button
             onClick={onClose}
             className="px-3 py-1 rounded bg-hub-panel hover:bg-hub-card text-slate-300 hover:text-white border border-hub-border transition-colors"
           >
-            关闭窗口
+            关闭
           </button>
         </div>
 

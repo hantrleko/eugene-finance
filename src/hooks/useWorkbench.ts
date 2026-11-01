@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react';
 import { PROJECTS } from '../data/projects';
 import { Project } from '../types';
 
-const PINNED_STORAGE_KEY = 'ef_workbench_pinned_v1';
-const RECENT_STORAGE_KEY = 'ef_workbench_recent_v1';
+const PINNED_STORAGE_KEY = 'ef_workbench_pinned_v2';
+const RECENT_STORAGE_KEY = 'ef_workbench_recent_v2';
 
 // Initial 6 recommended entries
-const DEFAULT_PINNED_IDS = [
+export const DEFAULT_PINNED_IDS = [
   'market-pulse',
   'quant-risk-lab',
   'market-microstructure-lab',
@@ -19,9 +19,10 @@ export function useWorkbench() {
   const [pinnedIds, setPinnedIds] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem(PINNED_STORAGE_KEY);
-      if (saved) {
+      // Key fix: If saved is present in localStorage (even as "[]"), respect user's explicit choice!
+      if (saved !== null) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        if (Array.isArray(parsed)) {
           return parsed;
         }
       }
@@ -34,7 +35,7 @@ export function useWorkbench() {
   const [recentIds, setRecentIds] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem(RECENT_STORAGE_KEY);
-      if (saved) {
+      if (saved !== null) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) {
           return parsed;
@@ -64,16 +65,12 @@ export function useWorkbench() {
     }
   }, [recentIds]);
 
-  // Toggle pin
+  // Toggle pin: support clean toggle without unexpectedly dropping items
   const togglePin = (projectId: string) => {
     setPinnedIds((prev) => {
       if (prev.includes(projectId)) {
         return prev.filter((id) => id !== projectId);
       } else {
-        // limit to 6
-        if (prev.length >= 6) {
-          return [...prev.slice(1), projectId];
-        }
         return [...prev, projectId];
       }
     });
@@ -91,6 +88,10 @@ export function useWorkbench() {
 
   const clearRecent = () => {
     setRecentIds([]);
+  };
+
+  const clearAllPinned = () => {
+    setPinnedIds([]);
   };
 
   const resetPinnedToDefault = () => {
@@ -113,6 +114,7 @@ export function useWorkbench() {
     togglePin,
     recordOpen,
     clearRecent,
+    clearAllPinned,
     resetPinnedToDefault,
     pinnedCount: pinnedProjects.length
   };

@@ -10,54 +10,52 @@ interface HeroProps {
 
 export const Hero: React.FC<HeroProps> = ({ onOpenSearch, onSelectTargetGoal, activeGoal }) => {
   return (
-    <section className="relative pt-12 pb-10 sm:pt-16 sm:pb-12 border-b border-hub-border overflow-hidden bg-grid-pattern">
+    <section className="relative pt-8 pb-8 sm:pt-12 sm:pb-10 border-b border-hub-border overflow-hidden bg-grid-pattern">
       {/* Background radial accent glow */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-hub-gold/5 blur-[120px] rounded-full pointer-events-none" />
-      <div className="absolute top-1/3 left-1/3 w-[350px] h-[200px] bg-hub-teal/5 blur-[100px] rounded-full pointer-events-none" />
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[250px] bg-hub-gold/5 blur-[120px] rounded-full pointer-events-none" />
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
         
         {/* Subtle Pre-header badge */}
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-hub-panel/80 border border-hub-border text-xs text-slate-300 mb-6 shadow-sm">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-hub-panel/80 border border-hub-border text-xs text-slate-300 mb-4 shadow-sm">
           <Sparkles className="w-3.5 h-3.5 text-hub-gold" />
           <span className="font-mono text-hub-gold text-[11px] font-medium tracking-wider uppercase">
             EUGENE FINANCE
           </span>
           <span className="text-slate-500">·</span>
-          <span>研究与决策工作台 V1.0</span>
+          <span>研究与决策工作台</span>
         </div>
 
-        {/* Brand headline */}
-        <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-slate-100 mb-4 font-sans leading-tight">
+        {/* Headline */}
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-slate-100 mb-2.5 font-sans leading-tight">
           研究与创作，<span className="gold-gradient-text">在此汇集。</span>
         </h1>
         
-        {/* Sub-headline */}
-        <p className="max-w-2xl mx-auto text-sm sm:text-base text-slate-300 font-normal leading-relaxed mb-8">
-          从数据与方法出发，形成行业理解与投资判断。<br className="hidden sm:inline" />
-          统一起点、连接专业工具，构建严肃可复盘的研究闭环。
+        {/* Concised Sub-headline */}
+        <p className="max-w-xl mx-auto text-sm sm:text-base text-slate-300 font-normal leading-relaxed mb-6">
+          从数据与方法出发，形成行业理解与投资判断。
         </p>
 
         {/* Global Search Bar */}
-        <div className="max-w-2xl mx-auto mb-6">
+        <div className="max-w-xl mx-auto mb-5">
           <div 
             onClick={onOpenSearch}
-            className="flex items-center w-full px-4 py-3.5 rounded-xl bg-hub-panel/90 border border-hub-border hover:border-hub-gold/60 text-slate-400 cursor-pointer shadow-subtle hover:shadow-gold-glow transition-all group"
+            className="flex items-center w-full px-4 py-2.5 sm:py-3 rounded-xl bg-hub-panel/90 border border-hub-border hover:border-hub-gold/60 text-slate-400 cursor-pointer shadow-subtle hover:shadow-gold-glow transition-all group"
           >
-            <Search className="w-5 h-5 text-slate-400 group-hover:text-hub-gold transition-colors mr-3" />
-            <span className="text-sm text-slate-400 group-hover:text-slate-200 transition-colors flex-1 text-left">
-              搜索项目、研究问题或方法…… (例如：年报文本、逆向DCF、协整、LOB、VaR)
+            <Search className="w-4 h-4 text-slate-400 group-hover:text-hub-gold transition-colors mr-2.5" />
+            <span className="text-xs sm:text-sm text-slate-400 group-hover:text-slate-200 transition-colors flex-1 text-left truncate">
+              搜索工具、方法或研究任务 (Ctrl+K)
             </span>
-            <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-mono px-2 py-1 rounded bg-hub-bg border border-hub-border text-slate-400 group-hover:border-hub-gold/40 group-hover:text-hub-gold transition-colors">
+            <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-mono px-2 py-0.5 rounded bg-hub-bg border border-hub-border text-slate-400 group-hover:border-hub-gold/40 group-hover:text-hub-gold transition-colors">
               Ctrl K
             </span>
           </div>
         </div>
 
         {/* Three Target Goals Filters */}
-        <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 text-xs">
+        <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-2.5 text-xs">
           <span className="text-slate-400 font-mono text-[11px] mr-1 hidden sm:inline">
-            快速聚焦研究目标：
+            聚焦目标：
           </span>
 
           <button
