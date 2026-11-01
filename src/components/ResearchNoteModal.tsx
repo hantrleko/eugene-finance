@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { 
   X, Check, Copy, Download, Calendar, User, BookOpen, 
   Layers, ArrowRight, ExternalLink, FileText, Eye, Code2, 
-  Quote, Hash, Sparkles 
+  Quote, Hash, Sparkles, CheckCircle2 
 } from 'lucide-react';
 import { ResearchNote, Project } from '../types';
 import { PROJECTS } from '../data/projects';
@@ -306,6 +306,15 @@ export const ResearchNoteModal: React.FC<ResearchNoteModalProps> = ({
               <span className="font-mono text-xs px-2 py-0.5 rounded bg-hub-gold/15 text-hub-gold border border-hub-gold/30 font-bold">
                 路径 {note.playbookLetter} · {note.playbookTitle}
               </span>
+              {note.isDemo ? (
+                <span className="font-mono text-xs px-2 py-0.5 rounded bg-amber-950/40 text-amber-300 border border-amber-800/40 flex items-center gap-1">
+                  示范样本 · Demo
+                </span>
+              ) : (
+                <span className="font-mono text-xs px-2 py-0.5 rounded bg-emerald-950/40 text-emerald-400 border border-emerald-800/40 flex items-center gap-1 font-semibold">
+                  个人实证底稿
+                </span>
+              )}
               <span className="font-mono text-xs px-2 py-0.5 rounded bg-hub-bg text-slate-300 border border-hub-border">
                 {note.domainName}
               </span>
@@ -393,6 +402,23 @@ export const ResearchNoteModal: React.FC<ResearchNoteModalProps> = ({
             </button>
           </div>
         </div>
+
+        {/* Audit / Sample Notice Banner */}
+        {note.isDemo ? (
+          <div className="px-5 py-2.5 sm:px-6 bg-amber-950/25 border-b border-amber-700/40 text-[11px] text-amber-300 flex items-center gap-2 flex-shrink-0">
+            <Quote className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+            <span>
+              <strong>【教学与研究示范样本】</strong>此底稿用于演示标准研究路径的产出结构与推演范式，文中指标为教学示例，未作为个人已核验之投资或学术审计凭证。
+            </span>
+          </div>
+        ) : (
+          <div className="px-5 py-2.5 sm:px-6 bg-emerald-950/25 border-b border-emerald-700/40 text-[11px] text-emerald-300 flex items-center gap-2 flex-shrink-0">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />
+            <span>
+              <strong>【个人实证研究记录】</strong>此底稿由 Eugene Finance 工作台实操归档，已保存分步实操笔记与关联证据文件。
+            </span>
+          </div>
+        )}
 
         {/* Deliverable Metrics / Quantitative highlights banner */}
         {note.metrics && note.metrics.length > 0 && (

@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { WorkbenchSection } from './components/WorkbenchSection';
+import { ResearchCasesSection } from './components/ResearchCasesSection';
 import { ContextDispatcher } from './components/ContextDispatcher';
 import { PlaybooksSection } from './components/PlaybooksSection';
 import { CatalogSection } from './components/CatalogSection';
@@ -13,14 +14,18 @@ import { CommandPalette } from './components/CommandPalette';
 import { ProjectModal } from './components/ProjectModal';
 import { PlaybookModal } from './components/PlaybookModal';
 import { ResearchNoteModal } from './components/ResearchNoteModal';
+import { ResearchCaseModal } from './components/ResearchCaseModal';
+import { CreateCaseModal } from './components/CreateCaseModal';
+import { ToolchainBridgeModal } from './components/ToolchainBridgeModal';
 import { useWorkbench } from './hooks/useWorkbench';
-import { Project, Playbook, ResearchNote, DomainId, TargetGoal, ActiveTab } from './types';
+import { useResearchCases } from './hooks/useResearchCases';
+import { Project, Playbook, ResearchNote, ResearchCase, DomainId, TargetGoal, ActiveTab } from './types';
 import { PROJECTS } from './data/projects';
 import { PLAYBOOKS } from './data/playbooks';
 import { RESEARCH_NOTES } from './data/researchNotes';
-import { ArrowRight, Layers, ScrollText, Calendar } from 'lucide-react';
+import { ArrowRight, Layers, ScrollText, Calendar, Compass } from 'lucide-react';
 
-// Hash parsing for deep linking (e.g. #workbench, #catalog?domain=02-company, #notes, #note=note-cmb-valuation-2026, #project=quant-risk-lab, #playbook=playbook-a)
+// Hash parsing for deep linking
 function parseHash(hashStr: string) {
   const clean = hashStr.replace(/^#\/?/, '');
   if (!clean) return { tab: 'workbench' as ActiveTab };
@@ -73,10 +78,45 @@ export function App() {
     resetPinnedToDefault,
   } = useWorkbench();
 
-  // Active view tab: 'workbench' | 'catalog' | 'notes' | 'exploration'
+  // V4.0 Research Cases Management Hook
+  const {
+    cases,
+    activeCases,
+    customNotes,
+    createCase,
+    updateCase,
+    toggleStep,
+    updateStepNotes,
+    addStepArtifact,
+    deleteStepArtifact,
+    concludeAndArchiveCase,
+    addCustomNote,
+    deleteCustomNote,
+  } = useResearchCases();
+
+  // Active view tab: 'workbench' | 'catalog' | 'notes' | 'exploration' | 'contracts'
   const [activeTab, setActiveTab] = useState<ActiveTab>(() => {
     return parseHash(window.location.hash).tab;
   });
+
+  // Compact Mode State (memorized in localStorage)
+  const [isCompactMode, setIsCompactMode] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('ef_compact_mode') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const handleToggleCompactMode = () => {
+    const next = !isCompactMode;
+    setIsCompactMode(next);
+    try {
+      localStorage.setItem('ef_compact_mode', String(next));
+    } catch {
+      // ignore
+    }
+  };
 
   // Modals & Panels state
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -85,11 +125,21 @@ export function App() {
   const [selectedNote, setSelectedNote] = useState<ResearchNote | null>(null);
   const [navigatedFromPlaybook, setNavigatedFromPlaybook] = useState<Playbook | null>(null);
 
+  // V4.0 New Modals
+  const [activeCaseModal, setActiveCaseModal] = useState<ResearchCase | null>(null);
+  const [isCreateCaseOpen, setIsCreateCaseOpen] = useState(false);
+  const [isToolchainBridgeOpen, setIsToolchainBridgeOpen] = useState(false);
+
   // Filters state in Catalog
   const [selectedDomain, setSelectedDomain] = useState<DomainId | 'all'>('all');
   const [selectedGoal, setSelectedGoal] = useState<TargetGoal | 'all'>('all');
 
-  // Sync state from URL hash
+  // Combined notes for deep link lookup
+  const combinedNotes = useMemo(() => {
+    return [...customNotes, ...RESEARCH_NOTES];
+  }, [customNotes]);
+
+  // Sync state from URL hash (Cleanly resets modals if not present in hash)
   const syncFromHash = useCallback(() => {
     const parsed = parseHash(window.location.hash);
     if (parsed.tab) {
@@ -101,19 +151,28 @@ export function App() {
     if (parsed.goal) {
       setSelectedGoal(parsed.goal);
     }
+
     if (parsed.projectId) {
       const p = PROJECTS.find((item) => item.id === parsed.projectId);
       if (p) setDetailProject(p);
+    } else {
+      setDetailProject(null);
     }
+
     if (parsed.playbookId) {
       const pb = PLAYBOOKS.find((item) => item.id === parsed.playbookId);
       if (pb) setActivePlaybook(pb);
+    } else {
+      setActivePlaybook(null);
     }
+
     if (parsed.noteId) {
-      const n = RESEARCH_NOTES.find((item) => item.id === parsed.noteId);
+      const n = combinedNotes.find((item) => item.id === parsed.noteId);
       if (n) setSelectedNote(n);
+    } else {
+      setSelectedNote(null);
     }
-  }, []);
+  }, [combinedNotes]);
 
   // Initial deep link check & hashchange listener
   useEffect(() => {
@@ -165,11 +224,20 @@ export function App() {
   // Global Keyboard shortcuts: Ctrl+K / Cmd+K and Alt+1~5 tab switching
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't intercept when user is in input, textarea, or IME composition
+      const isInputFocused =
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        (e.target as HTMLElement)?.isContentEditable ||
+        e.isComposing;
+
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         setIsSearchOpen(true);
         return;
       }
+
+      if (isInputFocused) return;
 
       if (e.altKey && !e.ctrlKey && !e.metaKey) {
         if (e.key === '1') {
@@ -183,10 +251,10 @@ export function App() {
           handleTabChange('notes');
         } else if (e.key === '4') {
           e.preventDefault();
-          handleTabChange('contracts');
+          handleTabChange('exploration');
         } else if (e.key === '5') {
           e.preventDefault();
-          handleTabChange('exploration');
+          handleTabChange('contracts');
         }
       }
     };
@@ -194,7 +262,7 @@ export function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // External open handler: records in recent and opens link
+  // External open handler
   const handleOpenProjectExternal = (project: Project) => {
     recordOpen(project.id);
     const targetUrl = project.officialUrl || project.repoUrl;
@@ -249,6 +317,12 @@ export function App() {
     handleOpenDetailModal(PROJECTS[nextIndex]);
   }, [currentProjectIndex]);
 
+  // Keep active case modal synced with latest case updates
+  const currentOpenCase = useMemo(() => {
+    if (!activeCaseModal) return null;
+    return cases.find((c) => c.id === activeCaseModal.id) || activeCaseModal;
+  }, [activeCaseModal, cases]);
+
   return (
     <div className="min-h-screen bg-hub-bg text-hub-text flex flex-col font-sans selection:bg-hub-gold/25 selection:text-hub-goldLight">
       
@@ -257,22 +331,38 @@ export function App() {
         activeTab={activeTab}
         onTabChange={handleTabChange}
         onOpenSearch={() => setIsSearchOpen(true)}
+        isCompactMode={isCompactMode}
+        onToggleCompactMode={handleToggleCompactMode}
       />
 
       {/* Main Content Area based on View Tab */}
       <main className="flex-1">
         
         {/* ======================================================== */}
-        {/* VIEW 1: WORKBENCH (轻快工作台 + 参数直达 + 研究路径) */}
+        {/* VIEW 1: WORKBENCH (V4.0 研究事项驱动型个人工作台) */}
         {/* ======================================================== */}
         {activeTab === 'workbench' && (
           <div className="animate-in fade-in duration-200">
-            {/* Hero Section */}
-            <Hero
-              onOpenSearch={() => setIsSearchOpen(true)}
-              onSelectTargetGoal={handleSelectGoalFromHero}
-              activeGoal={selectedGoal === 'all' ? null : selectedGoal}
-            />
+            {/* Hero Section (Hidden in Compact Mode) */}
+            {!isCompactMode && (
+              <Hero
+                onOpenSearch={() => setIsSearchOpen(true)}
+                onSelectTargetGoal={handleSelectGoalFromHero}
+                activeGoal={selectedGoal === 'all' ? null : selectedGoal}
+              />
+            )}
+
+            {/* V4.0 Primary Operation & Active Research Cases Section */}
+            <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${isCompactMode ? 'pt-6' : 'pt-2'}`}>
+              <ResearchCasesSection
+                cases={cases}
+                onOpenCase={(c) => setActiveCaseModal(c)}
+                onCreateNewCase={() => setIsCreateCaseOpen(true)}
+                onOpenToolchainBridge={() => setIsToolchainBridgeOpen(true)}
+                onNavigateToCatalog={() => handleTabChange('catalog')}
+                onNavigateToNotes={() => handleTabChange('notes')}
+              />
+            </div>
 
             {/* Workbench Section (常用工具 + 最近打开 + 排序与备份) */}
             <WorkbenchSection
@@ -290,7 +380,7 @@ export function App() {
               onNavigateToCatalog={() => handleTabChange('catalog')}
             />
 
-            {/* Context Dispatcher (跨系统上下文参数直达 Protocol) */}
+            {/* Context Dispatcher (V4.0 约束分发引擎：类型约束 · 真实对应) */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
               <ContextDispatcher onRecordOpen={recordOpen} />
             </div>
@@ -307,19 +397,22 @@ export function App() {
                       <h4 className="text-sm font-bold text-slate-100">
                         最新研究底稿与复盘归档
                       </h4>
+                      <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/40 px-1.5 py-0.2 rounded border border-emerald-800/40">
+                        {customNotes.length} 篇实证
+                      </span>
                       <span className="text-[10px] font-mono text-hub-gold bg-hub-gold/10 px-1.5 py-0.2 rounded border border-hub-gold/20">
-                        {RESEARCH_NOTES.length} 篇归档
+                        {RESEARCH_NOTES.length} 篇示范
                       </span>
                     </div>
                     <p className="text-xs text-slate-400 mt-0.5 line-clamp-1">
-                      最新：《{RESEARCH_NOTES[0].title}》 · {RESEARCH_NOTES[0].date}
+                      最新：《{combinedNotes[0].title}》 · {combinedNotes[0].date}
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <button
-                    onClick={() => handleOpenNoteModal(RESEARCH_NOTES[0])}
+                    onClick={() => handleOpenNoteModal(combinedNotes[0])}
                     className="px-3 py-1.5 rounded-lg bg-hub-panel hover:bg-hub-card text-xs text-slate-200 border border-hub-border hover:border-slate-500 transition-colors"
                   >
                     阅读最新一篇
@@ -394,19 +487,22 @@ export function App() {
         )}
 
         {/* ======================================================== */}
-        {/* VIEW 3: RESEARCH NOTES (研究成果与复盘库 · 知识飞轮) */}
+        {/* VIEW 3: RESEARCH NOTES (研究成果与复盘库 · 个人实证 + 示范) */}
         {/* ======================================================== */}
         {activeTab === 'notes' && (
           <div className="animate-in fade-in duration-200">
             <ResearchNotesSection
+              customNotes={customNotes}
               onSelectNote={handleOpenNoteModal}
               onSelectProject={handleOpenDetailModal}
+              onAddCustomNote={addCustomNote}
+              onDeleteCustomNote={deleteCustomNote}
             />
           </div>
         )}
 
         {/* ======================================================== */}
-        {/* VIEW 4: DATA CONTRACTS (数据契约与跨项目转接中心 V3.0) */}
+        {/* VIEW 4: DATA CONTRACTS (数据契约与四层深度校验中心 V4.0) */}
         {/* ======================================================== */}
         {activeTab === 'contracts' && (
           <div className="animate-in fade-in duration-200">
@@ -417,7 +513,7 @@ export function App() {
         )}
 
         {/* ======================================================== */}
-        {/* VIEW 4: EXPLORATION (探索与创作：历史地理自然 + 媒体空间) */}
+        {/* VIEW 5: EXPLORATION (探索与创作：历史地理自然 + 媒体空间) */}
         {/* ======================================================== */}
         {activeTab === 'exploration' && (
           <div className="animate-in fade-in duration-200">
@@ -444,7 +540,7 @@ export function App() {
         onTogglePin={togglePin}
       />
 
-      {/* Unified Project Specification Drawer / Modal */}
+      {/* Unified Project Specification Drawer */}
       <ProjectModal
         project={detailProject}
         isOpen={Boolean(detailProject)}
@@ -484,6 +580,47 @@ export function App() {
         onClose={handleCloseNoteModal}
         onSelectProject={handleOpenDetailModal}
         onOpenProjectExternal={handleOpenProjectExternal}
+      />
+
+      {/* V4.0 Active Research Case Workspace Drawer */}
+      <ResearchCaseModal
+        researchCase={currentOpenCase}
+        isOpen={Boolean(activeCaseModal)}
+        onClose={() => setActiveCaseModal(null)}
+        onToggleStep={toggleStep}
+        onUpdateStepNotes={updateStepNotes}
+        onAddStepArtifact={addStepArtifact}
+        onDeleteStepArtifact={deleteStepArtifact}
+        onConcludeAndArchive={(caseId, conc, lim) => {
+          const newNote = concludeAndArchiveCase(caseId, conc, lim);
+          setActiveCaseModal(null);
+          if (newNote) {
+            handleOpenNoteModal(newNote);
+          }
+        }}
+        onOpenProjectExternal={handleOpenProjectExternal}
+        onOpenToolchainBridge={() => setIsToolchainBridgeOpen(true)}
+      />
+
+      {/* V4.0 Create Research Case Modal */}
+      <CreateCaseModal
+        isOpen={isCreateCaseOpen}
+        onClose={() => setIsCreateCaseOpen(false)}
+        onCreate={(params) => {
+          const newCase = createCase(params);
+          setActiveCaseModal(newCase);
+        }}
+      />
+
+      {/* V4.0 Toolchain Bridge Demonstrator Modal */}
+      <ToolchainBridgeModal
+        isOpen={isToolchainBridgeOpen}
+        onClose={() => setIsToolchainBridgeOpen(false)}
+        onAttachToCase={(art) => {
+          if (cases.length > 0) {
+            addStepArtifact(cases[0].id, 1, art);
+          }
+        }}
       />
 
     </div>

@@ -3,6 +3,7 @@ import { ResearchNote } from '../types';
 export const RESEARCH_NOTES: ResearchNote[] = [
   {
     id: 'note-cmb-valuation-2026',
+    isDemo: true,
     title: '招商银行：净息差企稳假说、零售资产质量压力测试与市场隐含预期逆向DCF推演',
     subtitle: '遵循路径 A 标准流程，连接年报 MD&A 语气情绪与逆向估值模型',
     date: '2026-10-25',
@@ -88,6 +89,7 @@ export const RESEARCH_NOTES: ResearchNote[] = [
   },
   {
     id: 'note-mda-tone-empirical-2026',
+    isDemo: true,
     title: 'A股管理层MD&A披露语气与分析师非共识预测：基于交错DID的因果识别与异质性检验',
     subtitle: '遵循路径 B 标准流程，连接文本挖掘特征面板与安慰剂假说检验',
     date: '2026-09-18',
@@ -164,6 +166,7 @@ export const RESEARCH_NOTES: ResearchNote[] = [
   },
   {
     id: 'note-geopolitical-haven-allocation-2026',
+    isDemo: true,
     title: '地缘政治风险脉冲传导、避险资产动态脱钩与时点风险预算配置备忘',
     subtitle: '遵循路径 C 标准流程，基于 GPR 指数与无前瞻偏差时点方差分解',
     date: '2026-10-12',
@@ -240,6 +243,7 @@ export const RESEARCH_NOTES: ResearchNote[] = [
   },
   {
     id: 'note-lob-orderflow-toxicity-2026',
+    isDemo: true,
     title: '高频逐笔回放与突发流动性枯竭：订单流不平衡对短期成交价的弹性冲击',
     subtitle: '基于真实逐笔成交回放系统，验证逆向选择成本与大单价格弹性响应',
     date: '2026-08-30',

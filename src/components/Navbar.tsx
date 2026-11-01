@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Compass, Layers, Sparkles, Menu, X, ExternalLink, ScrollText, Database, Sun, Moon } from 'lucide-react';
+import { 
+  Search, Compass, Layers, Sparkles, Menu, X, ExternalLink, 
+  ScrollText, Database, Sun, Moon, Minimize2, Maximize2 
+} from 'lucide-react';
 import { ActiveTab } from '../types';
 import { useToast } from '../context/ToastContext';
 
@@ -7,9 +10,17 @@ interface NavbarProps {
   activeTab: ActiveTab;
   onTabChange: (tab: ActiveTab) => void;
   onOpenSearch: () => void;
+  isCompactMode?: boolean;
+  onToggleCompactMode?: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, onOpenSearch }) => {
+export const Navbar: React.FC<NavbarProps> = ({ 
+  activeTab, 
+  onTabChange, 
+  onOpenSearch,
+  isCompactMode = false,
+  onToggleCompactMode,
+}) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { info } = useToast();
 
@@ -45,12 +56,12 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, onOpenSe
     info(next === 'paper' ? '已切换至 刊物暖纸 (Editorial Paper) 阅读模式' : '已切换至 曜石暗色 (Obsidian Dark) 工作台模式');
   };
 
+  // Primary Daily Tabs (Converged to 4 according to V4.0 design)
   const navTabs = [
     { id: 'workbench' as ActiveTab, label: '工作台', icon: Compass, shortcut: 'Alt+1' },
     { id: 'catalog' as ActiveTab, label: '全部工具', icon: Layers, shortcut: 'Alt+2' },
-    { id: 'notes' as ActiveTab, label: '成果库', icon: ScrollText, shortcut: 'Alt+3' },
-    { id: 'contracts' as ActiveTab, label: '数据契约', icon: Database, shortcut: 'Alt+4' },
-    { id: 'exploration' as ActiveTab, label: '探索创作', icon: Sparkles, shortcut: 'Alt+5' },
+    { id: 'notes' as ActiveTab, label: '研究记录', icon: ScrollText, shortcut: 'Alt+3' },
+    { id: 'exploration' as ActiveTab, label: '探索创作', icon: Sparkles, shortcut: 'Alt+4' },
   ];
 
   const handleTabClick = (tab: ActiveTab) => {
@@ -85,7 +96,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, onOpenSe
                 Eugene Finance
               </span>
               <span className="text-[10px] uppercase font-mono px-1.5 py-0.2 rounded bg-hub-gold/10 text-hub-gold border border-hub-gold/20 font-medium">
-                Hub
+                V4.0
               </span>
             </div>
             <span className="text-[11px] text-slate-400 font-sans tracking-wide hidden sm:inline">
@@ -108,6 +119,7 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, onOpenSe
                     ? 'bg-hub-panel text-hub-gold border border-hub-gold/30 shadow-sm'
                     : 'text-slate-300 hover:text-white hover:bg-hub-panel/50 border border-transparent'
                 }`}
+                title={`切换至 ${tab.label} (${tab.shortcut})`}
               >
                 <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-hub-gold' : 'text-slate-400'}`} />
                 <span>{tab.label}</span>
@@ -117,7 +129,22 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, onOpenSe
         </nav>
 
         {/* Search & Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          
+          {/* Data Contracts & Ingestion Secondary Access */}
+          <button
+            onClick={() => handleTabClick('contracts')}
+            className={`hidden lg:flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs transition-colors border ${
+              activeTab === 'contracts'
+                ? 'bg-hub-panel text-hub-teal border-hub-teal/40'
+                : 'bg-hub-panel/80 hover:bg-hub-panel border-hub-border text-slate-300 hover:text-white'
+            }`}
+            title="数据契约与校验测试台 (Alt+5)"
+          >
+            <Database className="w-3.5 h-3.5 text-hub-teal" />
+            <span className="hidden xl:inline">数据契约</span>
+          </button>
+
           {/* Quick Search Button */}
           <button
             onClick={onOpenSearch}
@@ -130,6 +157,21 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, onOpenSe
               Ctrl K
             </kbd>
           </button>
+
+          {/* Compact Mode Toggle */}
+          {onToggleCompactMode && activeTab === 'workbench' && (
+            <button
+              onClick={onToggleCompactMode}
+              className={`p-1.5 rounded-lg border transition-colors hidden sm:flex items-center ${
+                isCompactMode
+                  ? 'bg-hub-gold/15 text-hub-gold border-hub-gold/40'
+                  : 'bg-hub-panel/80 hover:bg-hub-panel border-hub-border text-slate-400 hover:text-white'
+              }`}
+              title={isCompactMode ? '切回完整欢迎介绍' : '切换为紧凑工作台模式 (优先显示在研事项)'}
+            >
+              {isCompactMode ? <Maximize2 className="w-3.5 h-3.5" /> : <Minimize2 className="w-3.5 h-3.5" />}
+            </button>
+          )}
 
           {/* Theme Switcher Button */}
           <button
@@ -194,6 +236,19 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, onTabChange, onOpenSe
               </button>
             );
           })}
+          
+          <button
+            onClick={() => handleTabClick('contracts')}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+              activeTab === 'contracts'
+                ? 'bg-hub-panel text-hub-teal border border-hub-teal/30'
+                : 'text-slate-300 hover:bg-hub-panel/60'
+            }`}
+          >
+            <Database className="w-4 h-4 text-hub-teal" />
+            <span>数据契约与校验测试台</span>
+          </button>
+
           <div className="pt-2 border-t border-hub-border/60">
             <button
               onClick={() => {

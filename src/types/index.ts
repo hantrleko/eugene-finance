@@ -31,6 +31,7 @@ export interface QueryProtocol {
   pairParam?: string;   // e.g. "pair"
   defaultExample?: string;
   description?: string;
+  hasDirectReceiver?: boolean; // whether target web app already parses this param or if user needs to copy-paste
 }
 
 export interface PrototypeInfo {
@@ -116,6 +117,9 @@ export interface ResearchNote {
   keyFindings: string[];
   metrics?: { label: string; value: string; hint?: string }[];
   contentMarkdown: string;
+  isDemo?: boolean; // true = 预置教学示范样本; false/undefined = 用户个人真实研究成果
+  sourceCaseId?: string; // 关联生成该笔记的研究事项 ID
+  evidenceFiles?: { name: string; type: string; size?: string; summary?: string }[];
 }
 
 export interface MediaItem {
@@ -130,4 +134,53 @@ export interface MediaItem {
   highlightTag?: string;
 }
 
-export type ActiveTab = 'workbench' | 'catalog' | 'notes' | 'contracts' | 'exploration';
+export type ActiveTab = 'workbench' | 'catalog' | 'notes' | 'exploration' | 'contracts';
+
+// ==========================================
+// V4.0 NEW CORE OBJECT: 研究事项 (Research Case)
+// ==========================================
+
+export type ContextTargetType = 'stock' | 'macro' | 'pair';
+
+export interface ResearchCaseArtifact {
+  id: string;
+  name: string;
+  type: 'csv' | 'json' | 'text' | 'image' | 'link';
+  size?: string;
+  content?: string;
+  createdAt: string;
+  stepNumber?: number;
+  toolId?: string;
+}
+
+export interface ResearchCaseStep {
+  stepNumber: number;
+  title: string;
+  purpose: string;
+  toolId?: string;
+  toolName: string;
+  completed: boolean;
+  completedAt?: string;
+  notes: string;
+  artifacts: ResearchCaseArtifact[];
+}
+
+export interface ResearchCase {
+  id: string;
+  title: string;
+  question: string;
+  targetType: ContextTargetType;
+  targetIdentifier: string; // e.g. "600036.SH" or "US10Y" or "600036.SH,03968.HK"
+  targetName: string; // e.g. "招商银行"
+  asOfDate: string; // e.g. "2026-03-31"
+  playbookId: string;
+  playbookTitle: string;
+  playbookLetter: string;
+  status: 'active' | 'archived' | 'concluded';
+  createdAt: string;
+  updatedAt: string;
+  steps: ResearchCaseStep[];
+  conclusion?: string;
+  limitations?: string;
+  resultMetrics?: { label: string; value: string; hint?: string }[];
+}

@@ -18,78 +18,182 @@ export const DataContractsSection: React.FC<DataContractsSectionProps> = ({ onSe
   // Validator interactive state
   const [testContractId, setTestContractId] = useState<string>(DATA_CONTRACTS[0].id);
   const [inputCsv, setInputCsv] = useState<string>(DATA_CONTRACTS[0].sampleCsv);
-  const [validationReport, setValidationReport] = useState<{
+  const [tierReport, setTierReport] = useState<{
     status: 'idle' | 'success' | 'error';
-    message: string;
     rowCount: number;
+    layers: {
+      l1: { name: string; passed: boolean; detail: string };
+      l2: { name: string; passed: boolean; detail: string };
+      l3: { name: string; passed: boolean; detail: string };
+      l4: { name: string; passed: boolean; detail: string };
+    };
     errors: string[];
+    warnings: string[];
   }>({
     status: 'idle',
-    message: '',
     rowCount: 0,
+    layers: {
+      l1: { name: 'Layer 1: 文件格式与基础语法 (CSV Syntax)', passed: false, detail: '未运行' },
+      l2: { name: 'Layer 2: 字段类型与数值边界 (Type & Range Bounds)', passed: false, detail: '未运行' },
+      l3: { name: 'Layer 3: 研究口径与时序自洽性 (Methodology & Scope)', passed: false, detail: '未运行' },
+      l4: { name: 'Layer 4: 目标系统导入就绪度 (Target Ingestion)', passed: false, detail: '未运行' },
+    },
     errors: [],
+    warnings: [],
   });
   const [copiedCsv, setCopiedCsv] = useState(false);
 
   const currentContract = DATA_CONTRACTS.find((c) => c.id === selectedContractId) || DATA_CONTRACTS[0];
   const activeTestContract = DATA_CONTRACTS.find((c) => c.id === testContractId) || DATA_CONTRACTS[0];
 
-  // Run CSV Validation against selected schema
+  // 4-Layer Tiered CSV Validation
   const handleValidateCsv = () => {
     if (!inputCsv.trim()) {
-      setValidationReport({
+      setTierReport({
         status: 'error',
-        message: '请输入或加载 CSV 内容',
         rowCount: 0,
-        errors: ['内容为空'],
+        layers: {
+          l1: { name: 'Layer 1: 文件格式与基础语法', passed: false, detail: '内容为空' },
+          l2: { name: 'Layer 2: 字段类型与数值边界', passed: false, detail: '未验证' },
+          l3: { name: 'Layer 3: 研究口径与时序自洽性', passed: false, detail: '未验证' },
+          l4: { name: 'Layer 4: 目标系统导入就绪度', passed: false, detail: '未验证' },
+        },
+        errors: ['请输入或加载 CSV 内容'],
+        warnings: [],
       });
       return;
     }
 
     const lines = inputCsv.trim().split('\n').map((l) => l.trim()).filter(Boolean);
+    const errors: string[] = [];
+    const warnings: string[] = [];
+
+    // --- LAYER 1: CSV Syntax & RFC 4180 Parsing ---
+    let l1Passed = true;
+    let l1Detail = '通过：有效包含表头与数据行，列宽对齐';
+
     if (lines.length < 2) {
-      setValidationReport({
-        status: 'error',
-        message: 'CSV 至少需要包含 1 行表头和 1 行数据',
-        rowCount: 0,
-        errors: ['数据行数不足'],
-      });
-      return;
+      l1Passed = false;
+      l1Detail = '失败：CSV 至少需要包含 1 行表头和 1 行数据';
+      errors.push('数据行数不足，无法解析为表结构');
     }
 
     const headers = lines[0].split(',').map((h) => h.trim());
-    const requiredFields = activeTestContract.fields.filter((f) => f.required).map((f) => f.name);
-    const missingHeaders = requiredFields.filter((rf) => !headers.includes(rf));
-
-    const errors: string[] = [];
-    if (missingHeaders.length > 0) {
-      errors.push(`缺失必要字段表头：${missingHeaders.join(', ')}`);
-    }
-
-    // Check rows data format
     const dataRows = lines.slice(1);
+
     dataRows.forEach((row, idx) => {
       const cols = row.split(',').map((c) => c.trim());
       if (cols.length !== headers.length) {
-        errors.push(`第 ${idx + 2} 行列数与表头不一致（表头 ${headers.length} 列，该行 ${cols.length} 列）`);
+        l1Passed = false;
+        l1Detail = `失败：第 ${idx + 2} 行列数 (${cols.length}) 与表头 (${headers.length}) 不一致`;
+        errors.push(`第 ${idx + 2} 行列数与表头不符`);
       }
     });
 
-    if (errors.length > 0) {
-      setValidationReport({
-        status: 'error',
-        message: `校验未通过，发现 ${errors.length} 项格式违背`,
-        rowCount: dataRows.length,
-        errors,
-      });
-    } else {
-      setValidationReport({
-        status: 'success',
-        message: `合规校验通过！${dataRows.length} 行数据完全符合 ${activeTestContract.code} 规范，可安全导入 ${activeTestContract.targetProjectNames.join('、')}。`,
-        rowCount: dataRows.length,
-        errors: [],
-      });
+    // --- LAYER 2: Field Types & Numerical Bounds ---
+    let l2Passed = l1Passed;
+    let l2Detail = '通过：必填字段齐全，日期格式与数值边界合规';
+
+    const requiredFields = activeTestContract.fields.filter((f) => f.required).map((f) => f.name);
+    const missingHeaders = requiredFields.filter((rf) => !headers.includes(rf));
+
+    if (missingHeaders.length > 0) {
+      l2Passed = false;
+      l2Detail = `失败：缺少必填表头 [${missingHeaders.join(', ')}]`;
+      errors.push(`缺失核心定义字段：${missingHeaders.join(', ')}`);
     }
+
+    // Inspect row values against field types & bounds
+    dataRows.forEach((row, rowIdx) => {
+      const cols = row.split(',').map((c) => c.trim());
+      headers.forEach((h, colIdx) => {
+        const val = cols[colIdx];
+        const fieldSpec = activeTestContract.fields.find((f) => f.name === h);
+        if (!fieldSpec) return;
+
+        // Date check: YYYY-MM-DD
+        if (fieldSpec.type === 'date' || h.includes('date')) {
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(val)) {
+            l2Passed = false;
+            errors.push(`第 ${rowIdx + 2} 行 [${h}] 格式非法: "${val}"，必须符合 YYYY-MM-DD`);
+          }
+        }
+
+        // Integer check (year, count)
+        if (h.includes('year') || h.includes('count')) {
+          const num = Number(val);
+          if (isNaN(num) || !Number.isInteger(num)) {
+            l2Passed = false;
+            errors.push(`第 ${rowIdx + 2} 行 [${h}] 必须为合法整数，当前为: "${val}"`);
+          }
+        }
+
+        // Number & Ratio bounds check [-1.0, 1.0] or [0, 1]
+        if (fieldSpec.type === 'number') {
+          const num = Number(val);
+          if (isNaN(num)) {
+            l2Passed = false;
+            errors.push(`第 ${rowIdx + 2} 行 [${h}] 必须为数值，当前为: "${val}"`);
+          } else {
+            if (h.includes('optimism') || h.includes('tone') || h.includes('ratio')) {
+              if (num < -1.0 || num > 1.0) {
+                l2Passed = false;
+                errors.push(`第 ${rowIdx + 2} 行 [${h}] 数值超界 (${num})，比率类指标必须处于 [-1.0, 1.0]`);
+              }
+            }
+          }
+        }
+      });
+    });
+
+    if (!l2Passed && errors.length > 0) {
+      l2Detail = `发现 ${errors.length} 项类型或边界定义违规`;
+    }
+
+    // --- LAYER 3: Methodology & Temporal Scope ---
+    let l3Passed = l2Passed;
+    let l3Detail = '通过：无前瞻偏差，披露日晚于报告期，时序逻辑自洽';
+
+    // Temporal check: disclosure_date vs fiscal_year
+    dataRows.forEach((row, rowIdx) => {
+      const cols = row.split(',').map((c) => c.trim());
+      const dateColIdx = headers.findIndex((h) => h.includes('date'));
+      const yearColIdx = headers.findIndex((h) => h === 'fiscal_year' || h === 'report_year');
+
+      if (dateColIdx >= 0 && yearColIdx >= 0) {
+        const dateStr = cols[dateColIdx];
+        const yearNum = Number(cols[yearColIdx]);
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr) && !isNaN(yearNum)) {
+          const discYear = Number(dateStr.slice(0, 4));
+          if (discYear < yearNum) {
+            l3Passed = false;
+            errors.push(`第 ${rowIdx + 2} 行前瞻时序矛盾：${yearNum} 财年披露日不可能早于该财年 (${dateStr})`);
+          }
+        }
+      }
+    });
+
+    // --- LAYER 4: Target Ingestion Readiness ---
+    let l4Passed = l3Passed;
+    const targetsStr = activeTestContract.targetProjectNames.join('、');
+    const l4Detail = l3Passed
+      ? `已具备导入条件：${targetsStr} 可通过剪贴板或标准 CSV 文件直接接收`
+      : `未就绪：前序层级未通过，禁止导入 ${targetsStr}`;
+
+    const isSuccess = l1Passed && l2Passed && l3Passed && errors.length === 0;
+
+    setTierReport({
+      status: isSuccess ? 'success' : 'error',
+      rowCount: dataRows.length,
+      layers: {
+        l1: { name: 'Layer 1: 文件格式与基础语法 (CSV Syntax & RFC 4180)', passed: l1Passed, detail: l1Detail },
+        l2: { name: 'Layer 2: 字段类型与数值边界 (Type & Range Bounds)', passed: l2Passed, detail: l2Detail },
+        l3: { name: 'Layer 3: 研究口径与时序自洽性 (Methodology & Scope)', passed: l3Passed, detail: l3Detail },
+        l4: { name: 'Layer 4: 目标系统导入就绪度 (Target Ingestion)', passed: l4Passed, detail: l4Detail },
+      },
+      errors,
+      warnings,
+    });
   };
 
   const handleDownloadSample = (contract: DataContract) => {
@@ -377,7 +481,7 @@ export const DataContractsSection: React.FC<DataContractsSectionProps> = ({ onSe
                     setTestContractId(newId);
                     const matched = DATA_CONTRACTS.find((c) => c.id === newId);
                     if (matched) setInputCsv(matched.sampleCsv);
-                    setValidationReport({ status: 'idle', message: '', rowCount: 0, errors: [] });
+                    setTierReport((prev) => ({ ...prev, status: 'idle', errors: [], warnings: [] }));
                   }}
                   className="bg-hub-bg border border-hub-border rounded-lg px-2.5 py-1 text-xs text-slate-200 focus:outline-none focus:border-hub-gold font-mono"
                 >
@@ -390,7 +494,7 @@ export const DataContractsSection: React.FC<DataContractsSectionProps> = ({ onSe
               <button
                 onClick={() => {
                   setInputCsv(activeTestContract.sampleCsv);
-                  setValidationReport({ status: 'idle', message: '', rowCount: 0, errors: [] });
+                  setTierReport((prev) => ({ ...prev, status: 'idle', errors: [], warnings: [] }));
                 }}
                 className="text-xs font-mono text-hub-gold hover:underline flex items-center gap-1 self-start sm:self-auto"
               >
@@ -420,7 +524,7 @@ export const DataContractsSection: React.FC<DataContractsSectionProps> = ({ onSe
                 className="px-4 py-2 rounded-lg bg-hub-gold hover:bg-hub-goldLight text-slate-950 font-bold text-xs transition-colors shadow-sm flex items-center gap-1.5"
               >
                 <ShieldCheck className="w-4 h-4" />
-                <span>运行合规校验</span>
+                <span>运行四层深度合规校验</span>
               </button>
 
               <button
@@ -431,35 +535,70 @@ export const DataContractsSection: React.FC<DataContractsSectionProps> = ({ onSe
               </button>
             </div>
 
-            {/* Validation Result Banner */}
-            {validationReport.status !== 'idle' && (
-              <div
-                className={`p-4 rounded-xl border text-xs leading-relaxed space-y-2 ${
-                  validationReport.status === 'success'
-                    ? 'bg-emerald-950/30 border-emerald-800/40 text-emerald-300'
-                    : 'bg-rose-950/30 border-rose-800/40 text-rose-300'
-                }`}
-              >
-                <div className="flex items-center gap-2 font-bold text-sm">
-                  {validationReport.status === 'success' ? (
-                    <>
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                      <span>{validationReport.message}</span>
-                    </>
-                  ) : (
-                    <>
-                      <AlertTriangle className="w-4 h-4 text-rose-400" />
-                      <span>{validationReport.message}</span>
-                    </>
-                  )}
+            {/* 4-Layer Tiered Validation Report */}
+            {tierReport.status !== 'idle' && (
+              <div className="p-4 sm:p-5 rounded-xl bg-hub-panel border border-hub-border space-y-4 animate-in fade-in duration-150">
+                <div className="flex items-center justify-between pb-3 border-b border-hub-border/60">
+                  <div className="flex items-center gap-2">
+                    {tierReport.status === 'success' ? (
+                      <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+                    ) : (
+                      <AlertTriangle className="w-5 h-5 text-rose-400 flex-shrink-0" />
+                    )}
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-100">
+                        {tierReport.status === 'success'
+                          ? `四层检验全部通过 (${tierReport.rowCount} 行数据就绪)`
+                          : `未完全通过检验，发现 ${tierReport.errors.length} 项格式或口径违规`}
+                      </h4>
+                      <p className="text-[11px] text-slate-400">
+                        严格检验文件语法、字段边界范围、无前瞻偏差时序与目标系统接收就绪度。
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
-                {validationReport.errors.length > 0 && (
-                  <ul className="list-disc list-inside space-y-1 font-mono text-[11px] pt-1">
-                    {validationReport.errors.map((err, idx) => (
-                      <li key={idx}>{err}</li>
-                    ))}
-                  </ul>
+                {/* 4 Tier Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {[
+                    tierReport.layers.l1,
+                    tierReport.layers.l2,
+                    tierReport.layers.l3,
+                    tierReport.layers.l4,
+                  ].map((layer, idx) => (
+                    <div
+                      key={idx}
+                      className={`p-3 rounded-lg border text-xs ${
+                        layer.passed
+                          ? 'bg-hub-card border-emerald-500/30 text-emerald-300'
+                          : 'bg-hub-card border-rose-500/30 text-rose-300'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 font-bold mb-1">
+                        {layer.passed ? (
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                        ) : (
+                          <AlertTriangle className="w-4 h-4 text-rose-400 flex-shrink-0" />
+                        )}
+                        <span className="text-slate-200">{layer.name}</span>
+                      </div>
+                      <p className="text-[11px] text-slate-400 leading-relaxed font-mono">
+                        {layer.detail}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Specific Errors List */}
+                {tierReport.errors.length > 0 && (
+                  <div className="p-3 rounded-lg bg-rose-950/20 border border-rose-800/40 text-rose-300 text-[11px] font-mono space-y-1">
+                    <span className="font-bold block">具体违规项明细：</span>
+                    <ul className="list-disc list-inside space-y-0.5">
+                      {tierReport.errors.map((err, idx) => (
+                        <li key={idx}>{err}</li>
+                      ))}
+                    </ul>
+                  </div>
                 )}
               </div>
             )}

@@ -28,7 +28,7 @@ export const Footer: React.FC = () => {
             </p>
             <div className="pt-1">
               <span className="font-mono text-[10px] text-hub-gold bg-hub-gold/10 px-2 py-0.5 rounded border border-hub-gold/20">
-                Version 3.2 · Editorial & Interactive Craft
+                Version 4.0 · Research Workbench
               </span>
             </div>
           </div>
@@ -72,10 +72,10 @@ export const Footer: React.FC = () => {
           {/* Principles Col */}
           <div className="space-y-2">
             <span className="font-mono text-slate-300 text-xs font-semibold block uppercase tracking-wider">
-              V3.2 工程与架构规范
+              V4.0 研究工作台工程规范
             </span>
             <p className="text-slate-400 leading-relaxed text-[11px]">
-              严守“入口统一与路径串联”，支持双主题刊物排版、右侧规范抽屉、数据契约转接与知识飞轮沉淀；各子系统独立演进，保持边界清晰。
+              以“研究事项”为核心推进单元，支持分步实操记录、上下文参数精准分发、端到端工具链数据回流与个人实证成果归档。
             </p>
           </div>
 
@@ -93,7 +93,7 @@ export const Footer: React.FC = () => {
             <span>·</span>
             <span className="flex items-center gap-1">
               <Database className="w-3.5 h-3.5 text-hub-gold" />
-              <span>单事实目录驱动 (Registry v3.2)</span>
+              <span>单事实目录驱动 (Registry v4.0)</span>
             </span>
           </div>
 
