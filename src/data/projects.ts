@@ -2,7 +2,7 @@ import { Project } from '../types';
 
 export const PROJECTS: Project[] = [
   // ==========================================
-  // 01 市场与宏观 (4 已有 + 1 规划 = 5)
+  // 01 市场与宏观 (5 已有 + 0 规划 = 5)
   // ==========================================
   {
     id: 'market-pulse',
@@ -19,10 +19,10 @@ export const PROJECTS: Project[] = [
     stage: 'existing',
     accessMode: 'web',
     hostingType: 'container',
-    officialUrl: 'https://market-pulse.replit.app',
+    officialUrl: 'https://jin-rong-shu-ju-zhong-shu.replit.app/',
     repoUrl: 'https://github.com/hantrleko/jin-rong-shu-ju-zhong-shu',
     localPath: 'E:\\AMP\\financial-data-platform',
-    verificationStatus: '已在线部署 (Replit V1.3)',
+    verificationStatus: '已在线部署 (Replit · 市场研究终端)',
     runCommand: 'npm run dev',
     inputs: '实时行情API、宏观高频日历、跨品种大类资产指数',
     outputs: '宏观跨资产热力图、跨期利差走势、高频市场异动监测',
@@ -133,20 +133,28 @@ export const PROJECTS: Project[] = [
     domainName: '市场与宏观',
     targetGoals: ['academic', 'investment'],
     methodTags: ['动态因子模型', 'MIDAS混频', 'Nowcasting', '初值修订'],
-    stage: 'planned',
-    accessMode: 'planned',
-    hostingType: 'planned',
-    verificationStatus: '规划方案编制中',
+    stage: 'existing',
+    accessMode: 'web',
+    hostingType: 'static',
+    officialUrl: 'https://hantrleko.github.io/realtime-macro-forecast/',
+    repoUrl: 'https://github.com/hantrleko/realtime-macro-forecast',
+    verificationStatus: '在线运行 (GitHub Pages 已核验 · 宏观实时预测与数据发布更新)',
     inputs: '高频工业用电、港口吞吐量、PMI、高频物价与信贷投向',
     outputs: '当季实时GDP跟踪值、分项宏观意外指数(Surprise Index)',
     applicableScenes: '季度宏观拐点左侧捕捉、货币政策预判',
-    techStack: 'Python Statsmodels + Scikit-learn + FastAPI',
+    techStack: 'React + TypeScript + Vite + Tailwind CSS',
     playbookIds: ['playbook-c'],
-    initialPinned: false
+    initialPinned: false,
+    queryProtocol: {
+      macroParam: 'series',
+      dateParam: 'vintage',
+      defaultExample: 'GDP_NOWCAST',
+      description: '支持通过 ?series=GDP_NOWCAST 载入高频发布切片与混频预测'
+    }
   },
 
   // ==========================================
-  // 02 公司与产业 (1 已有 + 5 规划 = 6)
+  // 02 公司与产业 (5 已有 + 1 规划 = 6)
   // ==========================================
   {
     id: 'listed-filing-textmine',
@@ -206,6 +214,11 @@ export const PROJECTS: Project[] = [
     techStack: 'React 18 + TypeScript + Vite + Tailwind CSS + 数值求根引擎',
     playbookIds: ['playbook-a'],
     initialPinned: true,
+    queryProtocol: {
+      tickerParam: 'ticker',
+      defaultExample: '600036.SH',
+      description: '支持通过 ?ticker=600036.SH 自动载入标的经营驱动与逆向DCF模型'
+    },
     prototypeInfo: {
       type: 'notebook',
       label: '交互式逆向DCF求解器 (Python)',
@@ -225,14 +238,16 @@ export const PROJECTS: Project[] = [
     domainName: '公司与产业',
     targetGoals: ['company', 'investment'],
     methodTags: ['利润池迁移', 'Capex/折旧', '产能利用率', '上下游议价力'],
-    stage: 'prototype',
+    stage: 'existing',
     accessMode: 'web',
-    hostingType: 'container',
-    verificationStatus: '算法草案就绪 (微笑曲线推演矩阵)',
+    hostingType: 'static',
+    officialUrl: 'https://hantrleko.github.io/industry-profit-pool/',
+    repoUrl: 'https://github.com/hantrleko/industry-profit-pool',
+    verificationStatus: '在线运行 (GitHub Pages 已核验 · 产业链利润池与资本开支周期)',
     inputs: '行业各环节代表上市公司财务摘要、海关进出口高频数据、产能统计',
     outputs: '上下游利润池动态分布桑基图、行业资本开支周期位点指针',
     applicableScenes: '中观行业比较、周期行业左侧布局、成长赛道竞争壁垒评估',
-    techStack: 'Python + Pandas + ECharts',
+    techStack: 'React + TypeScript + Vite + Tailwind CSS',
     playbookIds: ['playbook-a'],
     initialPinned: false,
     prototypeInfo: {
@@ -253,16 +268,23 @@ export const PROJECTS: Project[] = [
     domainName: '公司与产业',
     targetGoals: ['academic', 'company'],
     methodTags: ['重定价缺口', '净息差NIM敏感性', '不良生成率', '资本充足率'],
-    stage: 'planned',
-    accessMode: 'planned',
-    hostingType: 'planned',
-    verificationStatus: '规划方案编制中',
+    stage: 'existing',
+    accessMode: 'web',
+    hostingType: 'static',
+    officialUrl: 'https://hantrleko.github.io/bank-al-lab/',
+    repoUrl: 'https://github.com/hantrleko/bank-al-lab',
+    verificationStatus: '在线运行 (GitHub Pages 已核验 · 银行经营与资产负债分析)',
     inputs: '上市银行存贷款重定价期限表、资产质量五级分类迁徙率',
     outputs: '利率敏感性缺口曲线、净息差预测模拟、拨备计提安全边际',
     applicableScenes: '金融行业研究、宏观货币政策传导机制评估、银行股安全边际测算',
-    techStack: 'Python + Streamlit / React',
-    playbookIds: [],
-    initialPinned: false
+    techStack: 'React + TypeScript + Vite + Tailwind CSS',
+    playbookIds: ['playbook-a'],
+    initialPinned: false,
+    queryProtocol: {
+      tickerParam: 'bank',
+      defaultExample: '600036.SH',
+      description: '支持通过 ?bank=600036.SH 载入银行资产负债结构与NIM敏感性测算'
+    }
   },
   {
     id: 'corporate-credit-stress-lab',
@@ -276,16 +298,23 @@ export const PROJECTS: Project[] = [
     domainName: '公司与产业',
     targetGoals: ['company', 'investment'],
     methodTags: ['债务到期墙', '利息保障倍数', '违约距离KMV', '流动性压力测试'],
-    stage: 'planned',
-    accessMode: 'planned',
-    hostingType: 'planned',
-    verificationStatus: '规划方案编制中',
+    stage: 'existing',
+    accessMode: 'web',
+    hostingType: 'static',
+    officialUrl: 'https://hantrleko.github.io/credit-stress-lab/?c=jianglan&h=18&rev=0&dso=0&bps=0&refi=100&guar=0&act=refi&tab=wall&lang=zh',
+    repoUrl: 'https://github.com/hantrleko/credit-stress-lab',
+    verificationStatus: '在线运行 (GitHub Pages 已核验 · 债务到期墙交互实验)',
     inputs: '企业发债期限结构、银行借款明细、经营性净现金流走势',
-    outputs: '未来各季度偿债缺口漏斗图、再融资成本敏感性曲线',
+    outputs: '未来各季度偿债缺口漏斗图、再融资成本敏感性曲线、流动性压力测试',
     applicableScenes: '信用债投研、困境资产投资(Distressed Debt)、企业流动性审计',
-    techStack: 'Python + Plotly / React',
-    playbookIds: [],
-    initialPinned: false
+    techStack: 'React + TypeScript + Vite + Tailwind CSS',
+    playbookIds: ['playbook-a'],
+    initialPinned: false,
+    queryProtocol: {
+      tickerParam: 'c',
+      defaultExample: 'jianglan',
+      description: '支持通过 ?c=企业标识 载入债务到期墙与再融资压力测试'
+    }
   },
   {
     id: 'mems-lbs-digital-twin',
@@ -313,7 +342,7 @@ export const PROJECTS: Project[] = [
   },
 
   // ==========================================
-  // 03 策略与组合 (3 已有 + 2 规划 = 5)
+  // 03 策略与组合 (5 已有 + 0 规划 = 5)
   // ==========================================
   {
     id: 'ah-pairs-dashboard',
@@ -389,10 +418,10 @@ export const PROJECTS: Project[] = [
     stage: 'existing',
     accessMode: 'web',
     hostingType: 'container',
-    officialUrl: 'https://us-stock-quant-tool.bolt.app',
+    officialUrl: 'https://us-stock-quant-tool-v4qt.bolt.host/',
     repoUrl: 'https://github.com/hantrleko/us-stock-quant-tool',
     isRepoPrivate: true,
-    verificationStatus: '已在线部署 (Bolt App)',
+    verificationStatus: '已在线部署 (Bolt Host · QuantLab 美股量化工具)',
     inputs: '美股日度/分钟线历史行情、技术指标计算参数',
     outputs: '策略回测资金曲线、交易胜率盈亏比、夏普比率与极端回撤分析',
     applicableScenes: '海外ETF配置、美股量化选股与动量轮动验证',
@@ -412,14 +441,16 @@ export const PROJECTS: Project[] = [
     domainName: '策略与组合',
     targetGoals: ['investment'],
     methodTags: ['Brier Score', '认知校准', '事前记录卡', '贝叶斯更新'],
-    stage: 'planned',
-    accessMode: 'planned',
-    hostingType: 'planned',
-    verificationStatus: '规划方案编制中',
+    stage: 'existing',
+    accessMode: 'web',
+    hostingType: 'static',
+    officialUrl: 'https://hantrleko.github.io/forecast-calibration-lab/',
+    repoUrl: 'https://github.com/hantrleko/forecast-calibration-lab',
+    verificationStatus: '在线运行 (GitHub Pages 已核验 · 投资判断与概率校准)',
     inputs: '投资命题与主观置信度(0~100%)、到期核验日、证伪阈值',
     outputs: '概率校准散点图、Brier综合得分、个人认知过度自信度分析',
     applicableScenes: '职业投资人决策审计、投研团队主观观点量化质量监控',
-    techStack: 'React + SQLite / LocalStorage + Recharts',
+    techStack: 'React + TypeScript + Vite + Tailwind CSS',
     playbookIds: ['playbook-a', 'playbook-c'],
     initialPinned: false
   },
@@ -435,16 +466,23 @@ export const PROJECTS: Project[] = [
     domainName: '策略与组合',
     targetGoals: ['investment'],
     methodTags: ['Risk Parity', 'Black-Litterman', 'CVaR风险预算', '边际风险贡献'],
-    stage: 'prototype',
+    stage: 'existing',
     accessMode: 'web',
-    hostingType: 'container',
-    verificationStatus: '算法原型就绪 (层级风险平价 HRP)',
+    hostingType: 'static',
+    officialUrl: 'https://hantrleko.github.io/portfolio-risk-budget/',
+    repoUrl: 'https://github.com/hantrleko/portfolio-risk-budget',
+    verificationStatus: '在线运行 (GitHub Pages 已核验 · 组合决策与风险预算工作台)',
     inputs: '候选资产收益协方差、主观观点收益与置信度矩阵、总风险预算上限',
     outputs: '目标配置权重表、各大类资产边际风险贡献柱状图、情景压力测试',
     applicableScenes: '大类资产配置方案设计、家族办公室稳健底仓构建',
-    techStack: 'Python CVXPY + Web Interactive UI',
+    techStack: 'React + TypeScript + Vite + Tailwind CSS',
     playbookIds: ['playbook-c'],
     initialPinned: false,
+    queryProtocol: {
+      macroParam: 'mode',
+      defaultExample: 'hrp',
+      description: '支持通过 ?mode=hrp 载入层级风险平价与风险预算求解器'
+    },
     prototypeInfo: {
       type: 'notebook',
       label: '无前视层级风险平价模型 (Python)',
@@ -454,7 +492,7 @@ export const PROJECTS: Project[] = [
   },
 
   // ==========================================
-  // 04 微观与衍生品 (1 已有 + 1 规划 = 2)
+  // 04 微观与衍生品 (2 已有 + 0 规划 = 2)
   // ==========================================
   {
     id: 'market-microstructure-lab',
@@ -495,20 +533,22 @@ export const PROJECTS: Project[] = [
     domainName: '微观与衍生品',
     targetGoals: ['academic', 'investment'],
     methodTags: ['SVI拟合', '隐含波动率微笑', '动态Delta对冲', '离散对冲破损'],
-    stage: 'planned',
-    accessMode: 'planned',
-    hostingType: 'planned',
-    verificationStatus: '规划方案编制中',
+    stage: 'existing',
+    accessMode: 'web',
+    hostingType: 'static',
+    officialUrl: 'https://hantrleko.github.io/options-surface-hedge-lab/',
+    repoUrl: 'https://github.com/hantrleko/options-surface-hedge-lab',
+    verificationStatus: '在线运行 (GitHub Pages 已核验 · 真实期权曲面与离散对冲)',
     inputs: '全市场期权链合约报价、标的现货价格、分红率与无风险利率',
     outputs: '三维隐含波动率连续曲面、不同再平衡频率下的对冲损益分布',
     applicableScenes: '场外衍生品做市对冲、期权非线性风险管理与做空波动率策略研究',
-    techStack: 'Python Scipy + Three.js 3D WebGL',
+    techStack: 'React + Three.js 3D + Vite + Tailwind CSS',
     playbookIds: [],
     initialPinned: false
   },
 
   // ==========================================
-  // 05 学术与学习 (3 已有 + 1 规划 = 4)
+  // 05 学术与学习 (4 已有 + 0 规划 = 4)
   // ==========================================
   {
     id: 'ef-lab',
@@ -581,11 +621,11 @@ export const PROJECTS: Project[] = [
     stage: 'existing',
     accessMode: 'web',
     hostingType: 'static',
-    officialUrl: 'https://eugenehan.app/',
+    officialUrl: 'https://www.eugenehan.app/',
     repoUrl: 'https://github.com/hantrleko/cfa-wizard-buddy',
     isRepoPrivate: true,
     localPath: 'F:\\Hermes\\Github\\cfa-wizard-buddy',
-    verificationStatus: '已在线部署 (正式域名 eugenehan.app)',
+    verificationStatus: '已在线部署 (正式域名 www.eugenehan.app)',
     inputs: 'CFA学科知识点索引、错题题型与概念关联标签',
     outputs: '公式推导拆解图卡、科目掌握度热力分布、阶段性复习提示',
     applicableScenes: '金融专业资格认证深度复习、金融基础理论全貌查漏补缺',
@@ -605,14 +645,16 @@ export const PROJECTS: Project[] = [
     domainName: '学术与学习',
     targetGoals: ['academic'],
     methodTags: ['多期DID', '断点回归RD', '安慰剂检验', '合成控制SCM'],
-    stage: 'prototype',
+    stage: 'existing',
     accessMode: 'web',
-    hostingType: 'container',
-    verificationStatus: '计量复现包就绪 (交错DID流水线)',
+    hostingType: 'static',
+    officialUrl: 'https://hantrleko.github.io/causal-replication-arena/',
+    repoUrl: 'https://github.com/hantrleko/causal-replication-arena',
+    verificationStatus: '在线运行 (GitHub Pages 已核验 · 因果识别与论文复现训练场)',
     inputs: '政策外生冲击样本集、对照组与实验组面板数据',
     outputs: '平行趋势检验动态图、反事实估计曲线、异质性与敏感度测试表',
     applicableScenes: '学术课题开题前识别策略论证、SSCI/经济研究实证方法演练',
-    techStack: 'R / Python Staggered DID + Quarto / Streamlit',
+    techStack: 'React + TypeScript + Vite + Tailwind CSS',
     playbookIds: ['playbook-b'],
     initialPinned: false,
     prototypeInfo: {
@@ -623,7 +665,7 @@ export const PROJECTS: Project[] = [
   },
 
   // ==========================================
-  // 06 探索与创作 (4 已有 + 0 规划 = 4)
+  // 06 探索与创作 (5 已有 + 0 规划 = 5)
   // ==========================================
   {
     id: 'pet-words',
@@ -653,11 +695,11 @@ export const PROJECTS: Project[] = [
   },
   {
     id: 'huaxia-fenghuo',
-    name: '华夏烽火',
-    enName: 'Huaxia Beacon: Military Geography & Historic Battles',
-    aliases: ['华夏烽火', '历史战役', '军事地理', '战局推演', '关隘考'],
-    summary: '中华历代经典战役与关隘地貌演化图谱，以地理视角解构天下大势',
-    description: '从崤函古道到剑门关，从巨鹿之战到淝水之战。结合真实地形等高线与古代行军路线，全景呈现地势险要如何决定攻防态势与王朝兴衰命运。',
+    name: '华夏烽火：1895–1955',
+    enName: 'Huaxia Beacon: Military Geography & Historic Battles (1895–1955)',
+    aliases: ['华夏烽火', '历史战役', '军事地理', '战局推演', '关隘考', 'huaxiawar'],
+    summary: '中华近代经典战役与关隘地貌演化图谱，以军事地理视角解构天下大势',
+    description: '结合真实山川地貌等高线与行军路线，全景呈现地势险要如何决定攻防态势与战略走向。通过独立推演沙盘呈现近现代关键战役抉择。',
     domainId: '06-explore',
     domainNumber: '06',
     domainName: '探索与创作',
@@ -665,14 +707,13 @@ export const PROJECTS: Project[] = [
     methodTags: ['军事地理学', '战役推演', '关隘地理GIS', '历史大势分析'],
     stage: 'existing',
     accessMode: 'web',
-    hostingType: 'static',
-    officialUrl: 'https://hantrleko.github.io/shaanxi-sandbox/',
-    repoUrl: 'https://github.com/hantrleko/shaanxi-sandbox',
-    verificationStatus: '已有版本 · 历史战役军事推演模块',
+    hostingType: 'container',
+    officialUrl: 'https://huaxiawar-45gbnvaw.manus.game/',
+    verificationStatus: '在线运行 (Manus Game 独立实证沙盘 已核验)',
     inputs: '中国历代典籍地理考证、古代军阵交锋路线图谱',
     outputs: '动态战役推进沙盘、关隘扼控战略价值分析',
     applicableScenes: '历史战役空间复盘、古代地理军事人文通识研究',
-    techStack: 'Three.js + GeoJSON + Canvas 2D Overlay',
+    techStack: 'Three.js + GeoJSON + Canvas 2D Overlay + WebGL',
     playbookIds: [],
     initialPinned: false
   },
@@ -706,7 +747,7 @@ export const PROJECTS: Project[] = [
     id: 'ocean-atlas',
     name: '深海图鉴',
     enName: 'Ocean Life 3D Atlas',
-    aliases: ['深海图鉴', 'ocean atlas', '海洋生物', '3D物种标本', '深海观测'],
+    aliases: ['深海图鉴', 'ocean atlas', '海洋生物', '3D物种标本', '深海观测', 'clownfish'],
     summary: '博物馆级交互式海洋生物3D数字图鉴，沉浸式观察神秘深海生命',
     description: '按照海洋透光层、中层带、半深海带、深渊带分层展示珍稀海洋生物。提供博物馆级高精度 3D 标本观察、器官解剖学说明与独特生存策略科普。',
     domainId: '06-explore',
@@ -717,14 +758,46 @@ export const PROJECTS: Project[] = [
     stage: 'existing',
     accessMode: 'web',
     hostingType: 'static',
-    officialUrl: 'https://hantrleko.github.io/ocean-atlas/',
+    officialUrl: 'https://hantrleko.github.io/ocean-atlas/?id=clownfish',
     repoUrl: 'https://github.com/hantrleko/ocean-atlas',
-    verificationStatus: '在线运行 (GitHub Pages 已核验)',
+    verificationStatus: '在线运行 (GitHub Pages 已核验 · 深海图鉴3D系统)',
     inputs: '深海生物三维扫描网格模型、海洋生态水深分布数据',
     outputs: '沉浸式水下光影视图、物种演化与极端环境适应特征卡',
     applicableScenes: '自然科学通识教育、数字博物馆展览、视觉美学启发',
     techStack: 'Three.js + GLSL 水下着色器 + Web Audio API',
     playbookIds: [],
     initialPinned: false
+  },
+  {
+    id: 'repo-radar',
+    name: '开源项目雷达',
+    enName: 'Repo Radar / Open-Source Intelligence',
+    aliases: ['repo-radar', '开源雷达', '项目发现', 'github radar', '开源追踪', '项目雷达'],
+    summary: '中文优先的个人开源项目发现、证据评估与订阅跟踪看板',
+    description: '用一句话描述需求，智能匹配相关 GitHub 仓库，提取架构证据与适用边界，构建个人领域持续订阅与跟踪闭环。支持多维度真实度评分与技术债穿透。',
+    domainId: '06-explore',
+    domainNumber: '06',
+    domainName: '探索与创作',
+    targetGoals: ['academic', 'company'],
+    methodTags: ['开源情报', '证据打分', '需求意图解析', '订阅更新追踪'],
+    stage: 'existing',
+    accessMode: 'web',
+    hostingType: 'static',
+    officialUrl: 'https://hantrleko.github.io/repo-radar/',
+    repoUrl: 'https://github.com/hantrleko/repo-radar',
+    localPath: 'E:\\AMP\\repo-radar',
+    verificationStatus: '在线运行 (GitHub Pages 已核验 · 证据化项目发现)',
+    runCommand: 'npm run dev',
+    inputs: '用户自然语言需求提炼、GitHub API 仓储元数据、提交活跃度与代码质量证据',
+    outputs: '结构化项目证据评估卡、多维度真实度打分、个人开源领域持续跟踪清单',
+    applicableScenes: '技术选型证据调研、前沿算法开源复现追踪、学术与工程工具发现',
+    techStack: 'React 18 + Vite + Tailwind CSS + Lucide Icons',
+    playbookIds: [],
+    initialPinned: false,
+    queryProtocol: {
+      tickerParam: 'q',
+      defaultExample: 'financial-analysis',
+      description: '支持通过 ?q=关键词 直接检索开源项目证据与雷达扫描'
+    }
   }
 ];

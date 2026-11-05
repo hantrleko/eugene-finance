@@ -8,7 +8,7 @@ export const DOMAINS: DomainInfo[] = [
     enName: 'MARKET & MACRO',
     question: '现在发生了什么？宏观环境和风险如何变化？',
     description: '从全局流动性与时点宏观出发，穿透跨资产风险结构与地缘政治脉冲，严防前视偏差。',
-    representativeProjects: ['Market Pulse', 'QuantRiskLab', 'GPR避险实验室', 'Global Capital Flow Atlas']
+    representativeProjects: ['Market Pulse', 'QuantRiskLab', 'GPR避险实验室', 'Global Capital Flow Atlas', '宏观实时预测']
   },
   {
     id: '02-company',
@@ -53,6 +53,6 @@ export const DOMAINS: DomainInfo[] = [
     enName: 'EXPLORATION & CREATION',
     question: '如何学习、探索知识并表达想法？',
     description: '独立创作空间：自然地理沙盘、历史战役推演、海洋标本与多维语言探索，保留人文与作品表达。',
-    representativeProjects: ['陕西地理沙盘', '深海图鉴', '华夏烽火', 'PET单词挑战', '媒体空间']
+    representativeProjects: ['陕西地理沙盘', '深海图鉴', '华夏烽火', 'PET单词挑战', '开源项目雷达']
   }
 ];
