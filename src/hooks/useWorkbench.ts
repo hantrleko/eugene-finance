@@ -156,6 +156,10 @@ export function useWorkbench() {
   return {
     pinnedProjects,
     recentProjects,
+    pinnedIds,
+    recentIds,
+    setPinnedIds,
+    setRecentIds,
     isPinned,
     togglePin,
     movePinned,

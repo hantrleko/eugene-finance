@@ -96,7 +96,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 Eugene Finance
               </span>
               <span className="text-[10px] uppercase font-mono px-1.5 py-0.2 rounded bg-hub-gold/10 text-hub-gold border border-hub-gold/20 font-medium">
-                V4.0
+                V4.1
               </span>
             </div>
             <span className="text-[11px] text-slate-400 font-sans tracking-wide hidden sm:inline">

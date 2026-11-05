@@ -20,6 +20,7 @@ import { ToolchainBridgeModal } from './components/ToolchainBridgeModal';
 import { useWorkbench } from './hooks/useWorkbench';
 import { useResearchCases } from './hooks/useResearchCases';
 import { Project, Playbook, ResearchNote, ResearchCase, DomainId, TargetGoal, ActiveTab } from './types';
+import { LocalWorkspaceState } from './utils/workspaceBundle';
 import { PROJECTS } from './data/projects';
 import { PLAYBOOKS } from './data/playbooks';
 import { RESEARCH_NOTES } from './data/researchNotes';
@@ -68,6 +69,10 @@ export function App() {
   const {
     pinnedProjects,
     recentProjects,
+    pinnedIds,
+    recentIds,
+    setPinnedIds,
+    setRecentIds,
     isPinned,
     togglePin,
     movePinned,
@@ -78,11 +83,13 @@ export function App() {
     resetPinnedToDefault,
   } = useWorkbench();
 
-  // V4.0 Research Cases Management Hook
+  // V4.1 Research Cases Management Hook
   const {
     cases,
     activeCases,
     customNotes,
+    setCases,
+    setCustomNotes,
     createCase,
     updateCase,
     toggleStep,
@@ -93,6 +100,27 @@ export function App() {
     addCustomNote,
     deleteCustomNote,
   } = useResearchCases();
+
+  // V4.1 Unified Workspace Bundle Ingestion Handler
+  const handleApplyWorkspaceBundle = useCallback((newState: LocalWorkspaceState, strategy: 'merge' | 'overwrite'): boolean => {
+    try {
+      setPinnedIds(newState.pinnedProjectIds);
+      setRecentIds(newState.recentProjectIds);
+      setCases(newState.researchCases);
+      setCustomNotes(newState.customNotes);
+      if (newState.compactMode !== undefined) {
+        setIsCompactMode(newState.compactMode);
+        try {
+          localStorage.setItem('ef_compact_mode', String(newState.compactMode));
+        } catch {
+          // ignore
+        }
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  }, [setPinnedIds, setRecentIds, setCases, setCustomNotes]);
 
   // Active view tab: 'workbench' | 'catalog' | 'notes' | 'exploration' | 'contracts'
   const [activeTab, setActiveTab] = useState<ActiveTab>(() => {
@@ -364,10 +392,15 @@ export function App() {
               />
             </div>
 
-            {/* Workbench Section (常用工具 + 最近打开 + 排序与备份) */}
+            {/* Workbench Section (常用工具 + 最近打开 + V4.1全量快照与备份) */}
             <WorkbenchSection
               pinnedProjects={pinnedProjects}
               recentProjects={recentProjects}
+              pinnedProjectIds={pinnedIds}
+              recentProjectIds={recentIds}
+              cases={cases}
+              customNotes={customNotes}
+              isCompactMode={isCompactMode}
               isPinned={isPinned}
               onTogglePin={togglePin}
               onMovePinned={movePinned}
@@ -377,6 +410,7 @@ export function App() {
               onResetPinned={resetPinnedToDefault}
               onExportConfig={exportConfig}
               onImportConfig={importConfig}
+              onApplyWorkspaceBundle={handleApplyWorkspaceBundle}
               onNavigateToCatalog={() => handleTabChange('catalog')}
             />
 

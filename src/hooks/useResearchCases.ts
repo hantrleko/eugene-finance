@@ -417,6 +417,8 @@ export function useResearchCases() {
     activeCases: cases.filter((c) => c.status === 'active'),
     concludedCases: cases.filter((c) => c.status === 'concluded'),
     customNotes,
+    setCases,
+    setCustomNotes,
     createCase,
     updateCase,
     toggleStep,

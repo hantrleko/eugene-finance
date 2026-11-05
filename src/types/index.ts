@@ -184,3 +184,50 @@ export interface ResearchCase {
   limitations?: string;
   resultMetrics?: { label: string; value: string; hint?: string }[];
 }
+
+// ==========================================
+// V4.1 UNIFIED WORKSPACE BUNDLE SCHEMA
+// ==========================================
+
+export interface WorkspaceBundleV4 {
+  schemaVersion: '4.1.0';
+  exportedAt: string;
+  clientInfo?: string;
+  summary: {
+    casesCount: number;
+    notesCount: number;
+    pinnedCount: number;
+    recentCount: number;
+    artifactsCount: number;
+  };
+  data: {
+    pinnedProjectIds: string[];
+    recentProjectIds: string[];
+    researchCases: ResearchCase[];
+    customNotes: ResearchNote[];
+    themePreference?: 'dark' | 'paper';
+    compactMode?: boolean;
+  };
+}
+
+export interface WorkspaceDiffPreview {
+  valid: boolean;
+  isLegacyFormat: boolean;
+  error?: string;
+  bundle?: WorkspaceBundleV4;
+  summary: {
+    schemaVersion: string;
+    exportedAt: string;
+    casesCount: number;
+    notesCount: number;
+    pinnedCount: number;
+    artifactsCount: number;
+  };
+  diff: {
+    newCasesCount: number;
+    updatedCasesCount: number;
+    existingCasesCount: number;
+    newNotesCount: number;
+    pinnedChangesCount: number;
+  };
+}
