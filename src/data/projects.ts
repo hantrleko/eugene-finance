@@ -207,7 +207,7 @@ export const PROJECTS: Project[] = [
     repoUrl: 'https://github.com/hantrleko/company-valuation-implied-expectations',
     localPath: 'E:\\AMP\\company-valuation-implied-expectations',
     runCommand: 'npm run dev',
-    verificationStatus: '已在线部署 (GitHub Pages V3.0) + 6阶分析链条 + 10家双行业 + 逆向求解与蒙特卡洛',
+    verificationStatus: '已在线部署 (GitHub Pages V3.1 深度交互与美学版) + 全局实时遥测HUD + 悬浮沙盘 + 10家双行业 + 逆向求解与蒙特卡洛',
     inputs: 'SEC EDGAR 10-K/10-Q、巨潮资讯结构化披露、交付量/ASP/毛利经营驱动',
     outputs: '市场隐含预期敏感性矩阵、反向估值热力图、安全边际测算、前置认错条件清单',
     applicableScenes: '深度个股基本面研究、预期差定量推演、下期财报可验证预测',
