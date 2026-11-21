@@ -3,6 +3,7 @@ import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { WorkbenchSection } from './components/WorkbenchSection';
 import { ResearchCasesSection } from './components/ResearchCasesSection';
+import { SystemTopologyMap } from './components/SystemTopologyMap';
 import { ContextDispatcher } from './components/ContextDispatcher';
 import { PlaybooksSection } from './components/PlaybooksSection';
 import { CatalogSection } from './components/CatalogSection';
@@ -380,7 +381,7 @@ export function App() {
               />
             )}
 
-            {/* V4.0 Primary Operation & Active Research Cases Section */}
+            {/* V4.3 Primary Operation & Active Research Cases Section */}
             <div className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${isCompactMode ? 'pt-6' : 'pt-2'}`}>
               <ResearchCasesSection
                 cases={cases}
@@ -389,6 +390,13 @@ export function App() {
                 onOpenToolchainBridge={() => setIsToolchainBridgeOpen(true)}
                 onNavigateToCatalog={() => handleTabChange('catalog')}
                 onNavigateToNotes={() => handleTabChange('notes')}
+              />
+
+              {/* V4.3 Interactive SVG Cross-System Data & Pipeline Topology Map */}
+              <SystemTopologyMap
+                onSelectProject={handleOpenDetailModal}
+                onOpenProjectExternal={handleOpenProjectExternal}
+                onOpenToolchainBridge={() => setIsToolchainBridgeOpen(true)}
               />
             </div>
 
@@ -572,6 +580,8 @@ export function App() {
         onOpenProjectExternal={handleOpenProjectExternal}
         isPinned={isPinned}
         onTogglePin={togglePin}
+        onCreateNewCase={() => setIsCreateCaseOpen(true)}
+        onOpenToolchainBridge={() => setIsToolchainBridgeOpen(true)}
       />
 
       {/* Unified Project Specification Drawer */}
@@ -616,17 +626,18 @@ export function App() {
         onOpenProjectExternal={handleOpenProjectExternal}
       />
 
-      {/* V4.0 Active Research Case Workspace Drawer */}
+      {/* V4.3 Active Research Case Split-Pane Studio Drawer */}
       <ResearchCaseModal
         researchCase={currentOpenCase}
         isOpen={Boolean(activeCaseModal)}
         onClose={() => setActiveCaseModal(null)}
+        onUpdateCase={updateCase}
         onToggleStep={toggleStep}
         onUpdateStepNotes={updateStepNotes}
         onAddStepArtifact={addStepArtifact}
         onDeleteStepArtifact={deleteStepArtifact}
-        onConcludeAndArchive={(caseId, conc, lim) => {
-          const newNote = concludeAndArchiveCase(caseId, conc, lim);
+        onConcludeAndArchive={(caseId, conc, lim, settlement) => {
+          const newNote = concludeAndArchiveCase(caseId, conc, lim, settlement);
           setActiveCaseModal(null);
           if (newNote) {
             handleOpenNoteModal(newNote);

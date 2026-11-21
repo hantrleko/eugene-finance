@@ -1,5 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Search, X, ExternalLink, ArrowRight, BookOpen, Layers, CornerDownLeft, Star, Zap } from 'lucide-react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { 
+  Search, X, ExternalLink, ArrowRight, BookOpen, Layers, 
+  CornerDownLeft, Star, Zap, Plus, Sparkles, Sliders 
+} from 'lucide-react';
 import { PROJECTS } from '../data/projects';
 import { PLAYBOOKS } from '../data/playbooks';
 import { Project, Playbook } from '../types';
@@ -13,6 +16,8 @@ interface CommandPaletteProps {
   onOpenProjectExternal: (project: Project) => void;
   isPinned?: (id: string) => boolean;
   onTogglePin?: (id: string) => void;
+  onCreateNewCase?: () => void;
+  onOpenToolchainBridge?: () => void;
 }
 
 export const CommandPalette: React.FC<CommandPaletteProps> = ({
@@ -23,13 +28,14 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   onOpenProjectExternal,
   isPinned,
   onTogglePin,
+  onCreateNewCase,
+  onOpenToolchainBridge,
 }) => {
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
-  // Lock body scroll when open
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -47,8 +53,43 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     };
   }, [isOpen]);
 
-  // Filter projects and playbooks
-  const trimmed = query.trim().toLowerCase();
+  const rawTrimmed = query.trim();
+  const trimmed = rawTrimmed.toLowerCase();
+
+  // Detect if user entered a stock ticker or macro code (e.g. 600036.SH, 600519, 00700.HK, US10Y, CN10Y, DXY)
+  const detectedDispatchContext = useMemo(() => {
+    if (!rawTrimmed || rawTrimmed.length < 2) return null;
+    const upper = rawTrimmed.toUpperCase();
+
+    // Check macro series pattern
+    if (/^(US10Y|CN10Y|DXY|DR007|GDP_NOWCAST|VIX|SOFR|LPR)$/i.test(upper)) {
+      const normalized = upper;
+      const tools = PROJECTS.filter((p) => p.officialUrl && p.queryProtocol?.macroParam);
+      return {
+        type: 'macro' as const,
+        code: normalized,
+        label: `宏观/利率序列 [${normalized}]`,
+        tools,
+      };
+    }
+
+    // Check A-share / HK / US ticker pattern (e.g., 600036.SH, 002594.SZ, 00700.HK, or 6 digits)
+    if (/^\d{6}(\.(SH|SZ|BJ))?$/i.test(upper) || /^\d{5}\.HK$/i.test(upper)) {
+      let normalized = upper;
+      if (/^\d{6}$/.test(upper)) {
+        normalized = upper.startsWith('6') ? `${upper}.SH` : `${upper}.SZ`;
+      }
+      const tools = PROJECTS.filter((p) => p.officialUrl && p.queryProtocol?.tickerParam);
+      return {
+        type: 'stock' as const,
+        code: normalized,
+        label: `证券标的 [${normalized}]`,
+        tools,
+      };
+    }
+
+    return null;
+  }, [rawTrimmed]);
 
   const matchedProjects = PROJECTS.filter((p) => {
     if (!trimmed) return true;
@@ -73,29 +114,53 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     );
   });
 
+  const handleDispatchLaunch = (project: Project, code: string, mode: 'stock' | 'macro') => {
+    if (!project.officialUrl) return;
+    const qp = project.queryProtocol;
+    const params = new URLSearchParams();
+    if (mode === 'stock' && qp?.tickerParam) {
+      params.set(qp.tickerParam, code);
+    } else if (mode === 'macro' && qp?.macroParam) {
+      params.set(qp.macroParam, code);
+    }
+    const qs = params.toString();
+    const url = qs ? `${project.officialUrl}?${qs}` : project.officialUrl;
+    window.open(url, '_blank', 'noopener,noreferrer');
+    onClose();
+  };
+
   // Flat list for keyboard navigation
-  type ResultItem = 
+  type ResultItem =
+    | { type: 'dispatch'; project: Project; code: string; mode: 'stock' | 'macro' }
     | { type: 'playbook'; item: Playbook }
     | { type: 'project'; item: Project };
 
   const allResults: ResultItem[] = [
+    ...(detectedDispatchContext
+      ? detectedDispatchContext.tools.map((p) => ({
+          type: 'dispatch' as const,
+          project: p,
+          code: detectedDispatchContext.code,
+          mode: detectedDispatchContext.type,
+        }))
+      : []),
     ...matchedPlaybooks.map((pb) => ({ type: 'playbook' as const, item: pb })),
-    ...matchedProjects.map((p) => ({ type: 'project' as const, item: p }))
+    ...matchedProjects.map((p) => ({ type: 'project' as const, item: p })),
   ];
 
   const totalResults = allResults.length;
 
-  // Prewarm selected item if it's a container project
   useEffect(() => {
     if (allResults.length > 0 && selectedIndex < allResults.length) {
       const selected = allResults[selectedIndex];
       if (selected.type === 'project' && selected.item.officialUrl) {
         prewarmUrl(selected.item.officialUrl);
+      } else if (selected.type === 'dispatch' && selected.project.officialUrl) {
+        prewarmUrl(selected.project.officialUrl);
       }
     }
   }, [selectedIndex, allResults]);
 
-  // Handle Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isOpen) return;
@@ -113,16 +178,16 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         e.preventDefault();
         if (allResults.length > 0 && selectedIndex < allResults.length) {
           const selected = allResults[selectedIndex];
-          if (selected.type === 'playbook') {
+          if (selected.type === 'dispatch') {
+            handleDispatchLaunch(selected.project, selected.code, selected.mode);
+          } else if (selected.type === 'playbook') {
             onSelectPlaybook(selected.item);
             onClose();
           } else {
-            // If Shift is pressed, always open detail modal
             if (e.shiftKey) {
               onSelectProject(selected.item);
               onClose();
             } else {
-              // Direct enter: if officialUrl exists, open external app; else open details
               if (selected.item.stage === 'existing' && selected.item.officialUrl) {
                 onOpenProjectExternal(selected.item);
                 onClose();
@@ -134,7 +199,6 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           }
         }
       } else if ((e.key === 'p' || e.key === 'P') && !e.ctrlKey && !e.metaKey && !query) {
-        // Toggle pin if search input is empty or when focused on item
         if (allResults.length > 0 && selectedIndex < allResults.length) {
           const selected = allResults[selectedIndex];
           if (selected.type === 'project' && onTogglePin) {
@@ -151,9 +215,11 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
   if (!isOpen) return null;
 
+  const dispatchOffset = detectedDispatchContext ? detectedDispatchContext.tools.length : 0;
+
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-start justify-center pt-14 sm:pt-20 px-3 sm:px-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150"
+      className="fixed inset-0 z-50 flex items-start justify-center pt-12 sm:pt-16 px-3 sm:px-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-150"
       onClick={onClose}
     >
       <div 
@@ -171,8 +237,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               setQuery(e.target.value);
               setSelectedIndex(0);
             }}
-            placeholder="搜索工具、方法或研究任务 (支持拼音/英文/方法名)..."
-            className="w-full bg-transparent text-slate-100 placeholder-slate-400 text-sm focus:outline-none"
+            placeholder="搜索 26 个工具、方法，或直接输入代码 (如 600036.SH / US10Y) 带参直达..."
+            className="w-full bg-transparent text-slate-100 placeholder-slate-400 text-sm focus:outline-none font-sans"
           />
           {query && (
             <button
@@ -187,7 +253,6 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             </button>
           )}
 
-          {/* Visible Close Button for Touch & Mobile */}
           <button
             onClick={onClose}
             className="p-1 rounded-md text-slate-400 hover:text-white hover:bg-hub-bg border border-hub-border/60 text-xs ml-1.5 flex items-center gap-1 transition-colors"
@@ -198,17 +263,112 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           </button>
         </div>
 
+        {/* Quick Command Pills Bar */}
+        <div className="px-4 py-2 bg-hub-bg/80 border-b border-hub-border flex items-center justify-between gap-2 flex-wrap text-[11px]">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-slate-400 font-mono text-[10px]">快捷指令:</span>
+            {['600036.SH', '600519.SH', 'US10Y'].map((sample) => (
+              <button
+                key={sample}
+                onClick={() => {
+                  setQuery(sample);
+                  setSelectedIndex(0);
+                }}
+                className="px-2 py-0.5 rounded bg-hub-panel hover:bg-hub-card border border-hub-border text-hub-gold font-mono text-[10px] transition-colors"
+              >
+                ⚡ {sample}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            {onCreateNewCase && (
+              <button
+                onClick={() => {
+                  onClose();
+                  onCreateNewCase();
+                }}
+                className="flex items-center gap-1 px-2 py-0.5 rounded bg-hub-gold/15 hover:bg-hub-gold/25 text-hub-gold border border-hub-gold/30 font-medium text-[10px] transition-colors"
+              >
+                <Plus className="w-3 h-3" />
+                <span>新建研究事项</span>
+              </button>
+            )}
+            {onOpenToolchainBridge && (
+              <button
+                onClick={() => {
+                  onClose();
+                  onOpenToolchainBridge();
+                }}
+                className="flex items-center gap-1 px-2 py-0.5 rounded bg-hub-panel hover:bg-hub-card text-hub-tealLight border border-hub-border font-medium text-[10px] transition-colors"
+              >
+                <Sparkles className="w-3 h-3 text-hub-teal" />
+                <span>工具链演练</span>
+              </button>
+            )}
+          </div>
+        </div>
+
         {/* Results Container */}
         <div ref={listRef} className="flex-1 overflow-y-auto p-2 space-y-1">
           {totalResults === 0 ? (
             <div className="py-12 text-center text-slate-400 text-sm">
-              <p>未找到与 “{query}” 匹配的工具或方法</p>
+              <p>未找到与 “{query}” 匹配的工具、代码或方法</p>
               <p className="text-xs text-slate-500 mt-1">
-                支持输入：年报文本、协整、VaR、逆向DCF、LOB、期权曲面、陕西沙盘等
+                支持输入股票代码 (如 600036.SH)、宏观序列 (US10Y) 或方法名 (逆向DCF、协整、DID)
               </p>
             </div>
           ) : (
             <>
+              {/* Direct Parameterized Dispatch Section */}
+              {detectedDispatchContext && (
+                <div className="mb-3 p-2 rounded-xl bg-hub-card/70 border border-hub-teal/40">
+                  <div className="px-2 py-1 text-[10px] font-mono uppercase tracking-wider text-hub-tealLight flex items-center justify-between">
+                    <span className="flex items-center gap-1.5 font-bold">
+                      <Sliders className="w-3.5 h-3.5 text-hub-teal" />
+                      <span>带参直达子系统 · {detectedDispatchContext.label}</span>
+                    </span>
+                    <span className="text-slate-400">按 Enter 立即注入参数并启动</span>
+                  </div>
+                  <div className="space-y-1 mt-1">
+                    {detectedDispatchContext.tools.map((proj, dIdx) => {
+                      const isSelected = selectedIndex === dIdx;
+                      const paramKey =
+                        detectedDispatchContext.type === 'stock'
+                          ? proj.queryProtocol?.tickerParam
+                          : proj.queryProtocol?.macroParam;
+                      return (
+                        <div
+                          key={`dispatch-${proj.id}`}
+                          onClick={() =>
+                            handleDispatchLaunch(proj, detectedDispatchContext.code, detectedDispatchContext.type)
+                          }
+                          className={`flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-all border ${
+                            isSelected
+                              ? 'bg-hub-panel border-hub-teal text-white shadow-xs'
+                              : 'hover:bg-hub-panel/60 border-transparent text-slate-200'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <Zap className="w-3.5 h-3.5 text-hub-gold flex-shrink-0" />
+                            <span className="text-xs font-bold truncate">
+                              用【{proj.name}】分析 {detectedDispatchContext.code}
+                            </span>
+                            <span className="font-mono text-[10px] text-hub-tealLight bg-hub-bg px-1.5 py-0.2 rounded border border-hub-border">
+                              ?{paramKey}={detectedDispatchContext.code}
+                            </span>
+                          </div>
+                          <span className="text-[11px] font-mono text-hub-gold flex items-center gap-1 flex-shrink-0">
+                            <span>直达</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {/* Playbooks Section if matched */}
               {matchedPlaybooks.length > 0 && (
                 <div className="mb-2">
@@ -217,7 +377,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                     <span>匹配研究路径 ({matchedPlaybooks.length})</span>
                   </div>
                   {matchedPlaybooks.map((pb, pbIdx) => {
-                    const isSelected = selectedIndex === pbIdx;
+                    const isSelected = selectedIndex === dispatchOffset + pbIdx;
                     return (
                       <div
                         key={pb.id}
@@ -262,7 +422,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                     {!query && <span className="text-[10px] lowercase text-slate-400">全部 {PROJECTS.length} 项</span>}
                   </div>
                   {matchedProjects.map((p, pIdx) => {
-                    const actualIndex = matchedPlaybooks.length + pIdx;
+                    const actualIndex = dispatchOffset + matchedPlaybooks.length + pIdx;
                     const isSelected = selectedIndex === actualIndex;
                     const isExisting = p.stage === 'existing';
                     const pinned = isPinned ? isPinned(p.id) : false;
@@ -378,7 +538,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               <kbd className="px-1 py-0.5 bg-hub-bg rounded border border-hub-border text-[10px] flex items-center">
                 <CornerDownLeft className="w-2.5 h-2.5" />
               </kbd>
-              <span>打开应用</span>
+              <span>启动/带参直达</span>
             </span>
             <span className="flex items-center gap-1 hidden sm:flex">
               <kbd className="px-1 py-0.5 bg-hub-bg rounded border border-hub-border text-[10px]">Shift+↵</kbd>

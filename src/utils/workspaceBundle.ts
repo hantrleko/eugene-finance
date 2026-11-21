@@ -18,7 +18,7 @@ export function buildWorkspaceBundle(state: LocalWorkspaceState): WorkspaceBundl
   }, 0);
 
   return {
-    schemaVersion: '4.1.0',
+    schemaVersion: '4.3.0',
     exportedAt: new Date().toISOString(),
     clientInfo: 'Eugene Finance Research Hub',
     summary: {
@@ -59,8 +59,8 @@ export function parseWorkspaceBundle(rawJson: string): {
       return { valid: false, error: 'JSON 格式解析失败：根元素必须为对象' };
     }
 
-    // Modern V4.1 Bundle Format
-    if (parsed.schemaVersion === '4.1.0' && parsed.data) {
+    // Modern V4.1 / V4.3 Bundle Format
+    if ((parsed.schemaVersion === '4.1.0' || parsed.schemaVersion === '4.3.0') && parsed.data) {
       const data = parsed.data;
       const researchCases: ResearchCase[] = Array.isArray(data.researchCases) ? data.researchCases : [];
       const customNotes: ResearchNote[] = Array.isArray(data.customNotes) ? data.customNotes : [];
@@ -72,7 +72,7 @@ export function parseWorkspaceBundle(rawJson: string): {
       }, 0);
 
       const bundle: WorkspaceBundleV4 = {
-        schemaVersion: '4.1.0',
+        schemaVersion: '4.3.0',
         exportedAt: parsed.exportedAt || new Date().toISOString(),
         clientInfo: parsed.clientInfo || 'Eugene Finance Bundle',
         summary: {

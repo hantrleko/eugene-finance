@@ -1,9 +1,17 @@
 import { useState, useEffect, useCallback } from 'react';
-import { ResearchCase, ResearchCaseStep, ResearchCaseArtifact, ResearchNote } from '../types';
+import { ResearchCase, ResearchCaseStep, ResearchCaseArtifact, ResearchNote, ResearchSettlement } from '../types';
 import { PLAYBOOKS } from '../data/playbooks';
 
 const STORAGE_KEY = 'ef_research_cases_v4';
 const NOTES_STORAGE_KEY = 'ef_custom_notes_v4';
+
+const DEFAULT_CMB_CSV_CONTENT = `year,report_period,mda_net_optimism,risk_uncertainty_idx,retail_npl_ratio,nim_pct
+2021,2021-FY,0.284,0.112,0.82,2.48
+2022,2022-FY,0.215,0.168,0.89,2.40
+2023,2023-FY,0.172,0.195,0.91,2.15
+2024,2024-FY,0.194,0.178,0.94,1.98
+2025,2025-FY,0.231,0.151,0.93,1.94
+2026,2026-Q1,0.258,0.142,0.92,1.93`;
 
 // Pre-seeded initial active case for realistic demonstration
 const INITIAL_DEFAULT_CASE: ResearchCase = {
@@ -29,13 +37,14 @@ const INITIAL_DEFAULT_CASE: ResearchCase = {
       toolName: '年报文本特征引擎',
       completed: true,
       completedAt: '2026-10-23',
-      notes: '已提取招行近 8 年年报 MD&A 切片。2025/2026 年报“风险提示”语气指数较 2023 年峰值回落 14.2%，表明存量零售风险敞口化解接近尾声。',
+      notes: '已提取招行近 6 期年报/一季报 MD&A 切片。2025/2026 年报“风险提示”不确定性指数较 2023 年峰值（0.195）回落至 0.142，净乐观度回升至 0.258，表明存量零售风险敞口化解接近尾声。',
       artifacts: [
         {
           id: 'art-cmb-tone-csv',
           name: 'cmb_mda_tone_timeseries.csv',
           type: 'csv',
           size: '2.4KB',
+          content: DEFAULT_CMB_CSV_CONTENT,
           createdAt: '2026-10-23',
           stepNumber: 1,
           toolId: 'listed-filing-textmine',
@@ -89,7 +98,46 @@ const INITIAL_DEFAULT_CASE: ResearchCase = {
     { label: '基准测算增速', value: '5.8%', hint: '保守资产回报模型' },
     { label: '估值安全边际', value: '26.5%', hint: '内在价值折价保护' },
   ],
+  preMortem: {
+    exAnteProbability: 72,
+    reviewDeadline: '2026-12-31',
+    killConditions: [
+      { id: 'kc-1', text: '单季净息差（NIM）跌破 1.85% 且负债成本未现改善', triggered: false },
+      { id: 'kc-2', text: '零售关注类贷款迁徙率连续两季超过 2.50%', triggered: false },
+      { id: 'kc-3', text: '核心一级资本充足率下行并触发分红率下调预警', triggered: false },
+    ],
+  },
 };
+
+function hydrateLegacyCase(c: ResearchCase): ResearchCase {
+  const hydrated = { ...c };
+  if (!hydrated.preMortem) {
+    hydrated.preMortem = {
+      exAnteProbability: c.id === 'case-cmb-2026-q1' ? 72 : 65,
+      reviewDeadline: '2026-12-31',
+      killConditions:
+        c.id === 'case-cmb-2026-q1'
+          ? INITIAL_DEFAULT_CASE.preMortem!.killConditions
+          : [
+              { id: 'kc-default-1', text: '核心经营指标连续两季低于基准假设下限', triggered: false },
+              { id: 'kc-default-2', text: '关键催化剂在核验截止日前未兑现或被证伪', triggered: false },
+            ],
+    };
+  }
+  if (hydrated.id === 'case-cmb-2026-q1' && hydrated.steps?.[0]?.artifacts?.[0] && !hydrated.steps[0].artifacts[0].content) {
+    hydrated.steps = hydrated.steps.map((st, idx) =>
+      idx === 0
+        ? {
+            ...st,
+            artifacts: st.artifacts.map((a) =>
+              a.id === 'art-cmb-tone-csv' && !a.content ? { ...a, content: DEFAULT_CMB_CSV_CONTENT } : a
+            ),
+          }
+        : st
+    );
+  }
+  return hydrated;
+}
 
 export function useResearchCases() {
   const [cases, setCases] = useState<ResearchCase[]>(() => {
@@ -98,7 +146,7 @@ export function useResearchCases() {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
+          return parsed.map(hydrateLegacyCase);
         }
       }
     } catch {
@@ -178,6 +226,14 @@ export function useResearchCases() {
       createdAt: new Date().toISOString().slice(0, 10),
       updatedAt: new Date().toISOString().slice(0, 10),
       steps,
+      preMortem: {
+        exAnteProbability: 65,
+        reviewDeadline: new Date(Date.now() + 90 * 86400000).toISOString().slice(0, 10),
+        killConditions: [
+          { id: `kc-${Date.now()}-1`, text: '核心基本面或因子指标连续两期低于基准假设阈值', triggered: false },
+          { id: `kc-${Date.now()}-2`, text: '关键催化事件在观察截止日前未兑现或反向恶化', triggered: false },
+        ],
+      },
     };
 
     setCases((prev) => [newCase, ...prev]);
@@ -312,12 +368,18 @@ export function useResearchCases() {
   }, []);
 
   // Conclude case and transform into a verified personal ResearchNote
-  const concludeAndArchiveCase = useCallback((caseId: string, conclusionText: string, limitationsText: string): ResearchNote | null => {
+  const concludeAndArchiveCase = useCallback((
+    caseId: string,
+    conclusionText: string,
+    limitationsText: string,
+    settlement?: ResearchSettlement
+  ): ResearchNote | null => {
     const targetCase = cases.find((c) => c.id === caseId);
     if (!targetCase) return null;
 
     const completedCount = targetCase.steps.filter((s) => s.completed).length;
     const today = new Date().toISOString().slice(0, 10);
+    const pm = targetCase.preMortem;
 
     // Build synthesized markdown
     let md = `# ${targetCase.title}\n\n`;
@@ -326,8 +388,24 @@ export function useResearchCases() {
     md += `> **核心研究命题**：${targetCase.question}\n\n---\n\n`;
     md += `## 一、 核心研判结论 (Conclusion)\n\n${conclusionText || '（未填写结论）'}\n\n`;
     
-    if (limitationsText) {
-      md += `## 二、 局限性与证伪边界 (Limitations & Kill Conditions)\n\n${limitationsText}\n\n`;
+    if (limitationsText || pm) {
+      md += `## 二、 事前认错红线与 Brier 概率校准复盘 (Pre-Mortem & Brier Settlement)\n\n`;
+      if (pm) {
+        md += `- **事前主观置信概率 ($p$)**：\`${pm.exAnteProbability}%\` ｜ **核验截止日**：\`${pm.reviewDeadline}\`\n`;
+        if (settlement) {
+          md += `- **事后实际结算 ($o$)**：\`${settlement.outcome === 1 ? '1 (命题证实)' : '0 (命题证伪)'}\` ｜ **Brier 误差得分 $(p - o)^2$**：\`${settlement.brierScore.toFixed(4)}\`\n`;
+        }
+        if (pm.killConditions.length > 0) {
+          md += `- **硬性证伪红线清单 (Kill Conditions)**：\n`;
+          pm.killConditions.forEach((kc) => {
+            md += `  - [${kc.triggered ? 'x' : ' '}] ${kc.text}${kc.triggered ? ' **（已触发认错）**' : ''}\n`;
+          });
+        }
+        md += `\n`;
+      }
+      if (limitationsText) {
+        md += `${limitationsText}\n\n`;
+      }
     }
 
     md += `## 三、 分步执行过程记录与提取证据\n\n`;
@@ -377,6 +455,7 @@ export function useResearchCases() {
       status: 'concluded',
       conclusion: conclusionText,
       limitations: limitationsText,
+      ...(settlement ? { settlement } : {}),
     });
 
     return newNote;

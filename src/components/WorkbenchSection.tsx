@@ -220,7 +220,7 @@ export const WorkbenchSection: React.FC<WorkbenchSectionProps> = ({
               title="备份、导出或跨设备合并工作台全量快照"
             >
               <FolderArchive className="w-3.5 h-3.5 text-hub-gold" />
-              <span>全量快照与备份 (V4.1)</span>
+              <span>全量快照与备份 (V4.3)</span>
             </button>
 
             <button

@@ -165,6 +165,25 @@ export interface ResearchCaseStep {
   artifacts: ResearchCaseArtifact[];
 }
 
+export interface ResearchKillCondition {
+  id: string;
+  text: string;
+  triggered: boolean;
+}
+
+export interface ResearchPreMortem {
+  exAnteProbability: number; // 0..100
+  reviewDeadline: string;
+  killConditions: ResearchKillCondition[];
+}
+
+export interface ResearchSettlement {
+  outcome: 1 | 0; // 1 = 证实 (Verified), 0 = 证伪 (Invalidated)
+  brierScore: number; // (p/100 - outcome)^2
+  settledAt: string;
+  postMortemNote?: string;
+}
+
 export interface ResearchCase {
   id: string;
   title: string;
@@ -183,14 +202,16 @@ export interface ResearchCase {
   conclusion?: string;
   limitations?: string;
   resultMetrics?: { label: string; value: string; hint?: string }[];
+  preMortem?: ResearchPreMortem;
+  settlement?: ResearchSettlement;
 }
 
 // ==========================================
-// V4.1 UNIFIED WORKSPACE BUNDLE SCHEMA
+// V4.1 / V4.3 UNIFIED WORKSPACE BUNDLE SCHEMA
 // ==========================================
 
 export interface WorkspaceBundleV4 {
-  schemaVersion: '4.1.0';
+  schemaVersion: '4.1.0' | '4.3.0';
   exportedAt: string;
   clientInfo?: string;
   summary: {
